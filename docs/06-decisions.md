@@ -235,9 +235,11 @@ deliberate, made together in chat.
   when it can't be decoded for display).
 - **Why:** A static instant error isn't how a real interrupted upload behaves.
 
-### Two spacing values chosen by eye (not precise Figma tokens)
+### Spacing snapped to exact Figma ratios
 
-Flagged for honesty — both are inside deliberately-scaled screens, and easy to
-snap to exact ratios if wanted:
-- Empty-state inner padding (px 28 / py 36) — proportional to the box scale-down.
-- Error button offset below the bar (40px; Figma's raw gap was 64px).
+Two values were briefly eyeballed, then recomputed to the exact proportional
+values from Figma:
+- Empty-state inner padding: Figma `px-40 py-50` scaled to the 620×340 box →
+  `28.57px` / `36.56px`.
+- Error button offset below the bar: Figma `gap-64` × (620/684 bar ratio) →
+  `58px`.

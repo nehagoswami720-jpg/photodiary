@@ -7,7 +7,7 @@ export default function EmptyState({ onFile }) {
 
   return (
     <label
-      className="flex h-[340px] w-[620px] max-w-[90vw] cursor-pointer flex-col items-center justify-center gap-1 rounded-[6px] border border-dashed border-[#525252] px-7 py-9"
+      className="flex h-[340px] w-[620px] max-w-[90vw] cursor-pointer flex-col items-center justify-center gap-1 rounded-[6px] border border-dashed border-[#525252] px-[28.57px] py-[36.56px]"
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => {
         e.preventDefault();

@@ -17,7 +17,7 @@ export default function ErrorState({ percent = 25, onRetry }) {
       </div>
 
       {/* retry button — absolute so it doesn't shift the bar's position */}
-      <div className="absolute left-1/2 top-full mt-10 -translate-x-1/2">
+      <div className="absolute left-1/2 top-full mt-[58px] -translate-x-1/2">
         <button
           type="button"
           onClick={onRetry}
