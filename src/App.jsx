@@ -13,7 +13,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-[88px] bg-white py-12">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-[139px] bg-white py-12">
       <h1
         className="whitespace-nowrap text-[64px] leading-none tracking-[-0.64px] text-[#1a1a1a]"
         style={{ fontFamily: '"DM Serif Text", serif' }}
@@ -41,7 +41,9 @@ export default function App() {
           className="w-[504px] max-w-full text-center text-[36px] leading-[41px] tracking-[-1.8px] text-[#333]"
           style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', fontWeight: 300 }}
         >
-          Start uploading your favorite moments
+          Start uploading your favorite
+          <br />
+          moments
         </p>
       </label>
     </div>
