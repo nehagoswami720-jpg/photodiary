@@ -1,6 +1,7 @@
-// Screen 3 — the success beat: the bar completes in green, "upload complete",
-// and a brief confetti burst that launches UP off the bar. Plays once on mount;
-// no ongoing interaction.
+// Screen 3 — the success beat. Layout mirrors the Loading screen exactly (same
+// bar + labels position) so the loading -> success swap doesn't move the bar.
+// The confetti is an absolute overlay (no layout space), and the bar eases from
+// black -> green in place. Plays once; no ongoing interaction.
 const COLORS = ['#028300', '#1a1a1a', '#767676', '#c99a3b', '#6b8cce'];
 const PIECES = Array.from({ length: 20 }, (_, i) => ({
   left: Math.round(5 + Math.random() * 90), // spread along the bar
@@ -13,9 +14,9 @@ const PIECES = Array.from({ length: 20 }, (_, i) => ({
 
 export default function Success() {
   return (
-    <div className="flex w-[620px] max-w-[90vw] flex-col">
-      {/* confetti launches upward, anchored to the top of the bar */}
-      <div className="pointer-events-none relative h-[180px] w-full">
+    <div className="relative flex w-[620px] max-w-[90vw] flex-col gap-2">
+      {/* confetti overlay — absolute so it doesn't push the bar down */}
+      <div className="pointer-events-none absolute bottom-full left-0 h-[180px] w-full">
         {PIECES.map((p, i) => (
           <span
             key={i}
@@ -32,10 +33,10 @@ export default function Success() {
         ))}
       </div>
 
-      {/* completed bar + labels (green, matching Figma #028300) */}
-      <div className="h-[8px] w-full bg-[#028300]" />
+      {/* bar eases black -> green in place (same position as the loading bar) */}
+      <div className="success-bar h-[8px] w-full" />
       <div
-        className="mt-2 flex items-center justify-between py-1 text-[18px] leading-[1.7] tracking-[-0.6px] text-[#767676]"
+        className="flex items-center justify-between py-1 text-[18px] leading-[1.7] tracking-[-0.6px] text-[#767676]"
         style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', fontWeight: 300 }}
       >
         <span>upload complete</span>

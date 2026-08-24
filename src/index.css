@@ -105,6 +105,19 @@
   .status-dots .dot { animation: none; opacity: 1; }
 }
 
+/* The completed bar eases from the loading black into green, in place. */
+.success-bar {
+  background-color: #028300;
+  animation: bar-to-green 0.8s ease forwards;
+}
+@keyframes bar-to-green {
+  from { background-color: #080808; }
+  to   { background-color: #028300; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .success-bar { animation: none; }
+}
+
 /* --- Success confetti (plays once, launches up off the bar) --- */
 .confetti-piece {
   position: absolute;
