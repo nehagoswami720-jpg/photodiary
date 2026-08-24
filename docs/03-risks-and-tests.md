@@ -4,6 +4,12 @@ The discipline: **before any design or UI work**, settle the assumptions that
 could sink the product — each with the smallest possible throwaway test and a
 clear decision rule. This is Phase 0.
 
+> **Phase 0 outcome (2026-08-23):** Gate **passed**. On 9 realistic files, 7/7
+> genuine camera-roll photos kept EXIF date + GPS; the 2 misses were a WhatsApp
+> forward and a screenshot. **R1 and R5 retired.** R2 (HEIC) untested — all
+> files were JPEG. R6 (storage): IndexedDB works, but persistent storage was not
+> auto-granted. Details in `06-decisions.md` (D12–D14).
+
 ## Riskiest assumptions, ranked
 
 Ranked by "if this is false, the app doesn't work."

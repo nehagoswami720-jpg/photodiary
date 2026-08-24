@@ -131,3 +131,47 @@ Format: **Decision · Context · Choice · Why.**
 - **Why:** The scoping story (cutting weather, then mobile — and getting
   *stronger* each time) is the case study. Committing it preserves the
   reasoning, not just the result.
+
+---
+
+### D12 — Phase 0 passed: the idea holds on real photos
+
+- **Context:** The gate — run the throwaway probe on the user's own realistic
+  photos before any design or engine work.
+- **Result (2026-08-23):** Of 9 dropped files, **7/7 genuine iPhone camera-roll
+  photos kept both EXIF date and GPS**; the 2 misses were a WhatsApp forward and
+  a screenshot (not real captures). Every camera photo also carried an offset
+  tag *and* resolved to the correct timezone via GPS, and reverse-geocoded to
+  the right city.
+- **Choice:** Proceed to Phase 1 (the engine).
+- **Why:** **R1** (EXIF survival — the scariest risk) and **R5** (timezone
+  correctness) are effectively retired. Manual entry is confirmed as a genuine
+  *fallback*, not the hero flow.
+- **Open items carried forward:** HEIC was untested (all files arrived as JPEG)
+  — kept as a low-priority open risk; persistent storage was not auto-granted on
+  localhost — Phase 3 needs a small strategy; library duplicates noted for v2
+  import.
+
+---
+
+### D13 — Online geocoding locked for v1 (resolves D7)
+
+- **Context:** D7 deferred online-vs-offline place naming to Phase 0 evidence.
+- **Choice:** Use the **online** geocoder (BigDataCloud client endpoint) for v1.
+- **Why:** It worked well on real coordinates, names read cleanly, and D3
+  already accepts coordinates leaving the device for naming. Simplest path to a
+  shipped v1. A fully-offline city dataset can be revisited later without
+  changing the product.
+
+---
+
+### D14 — Place-name format: smart local-vs-abroad
+
+- **Context:** The geocoder returns city + region + country, but a raw dump
+  ("Chicago, Illinois, United States of America (the)") is too busy and ugly for
+  a quiet card.
+- **Choice:** Format smartly — **domestic → "City, Region"** (Chicago,
+  Illinois); **foreign → "City, Country"** (Lisbon, Portugal). Strip ISO
+  artifacts like "(the)".
+- **Why:** Reads the way a person would actually say where a photo was taken,
+  and keeps the card calm.

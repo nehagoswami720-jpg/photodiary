@@ -106,10 +106,28 @@ product got more honest — and more buildable.*
 Success for v1 is not downloads — it's the "done" checklist in `01-v1-spec.md`
 being fully verifiable, and every fact on every card being provably real.
 
+## Phase 0 result — the gate, settled with evidence
+
+Before designing anything, a throwaway probe was run on the designer's own
+realistic photos. The result validated the core bet:
+
+- **7 of 7 genuine iPhone camera-roll photos kept both EXIF date and GPS.**
+- The only two misses were a **WhatsApp forward** and a **screenshot** — not
+  real captures, and exactly the case the manual-entry fallback was designed
+  for. So manual entry is a genuine *fallback*, not the main flow.
+- **Timezone came out airtight:** every photo carried an offset tag *and*
+  independently resolved to the correct zone from GPS — two agreeing sources,
+  so the weekday and time on the card are provably right.
+- Coordinates reverse-geocoded to the correct cities.
+
+**The case-study point:** the riskiest assumption (do real photos even keep
+their data?) was settled in an afternoon, on real photos, with a disposable
+page — *before* a single screen was designed. De-risking, not guessing.
+
 ## Open threads to revisit as the build proceeds
 
-- Phase 0 results: did EXIF survive on real photos? (Could reshape the hero
-  flow toward manual entry.)
-- Online vs. offline place naming (D7) — and whether offline naming retires the
-  privacy question (D3) entirely.
+- **HEIC path untested** — every test file arrived as JPEG, so the HEIC branch
+  is still unproven (low priority for this user).
+- **Persistent storage** was not auto-granted on localhost — Phase 3 needs a
+  strategy so the diary survives eviction.
 - Whether a small honesty disclosure belongs in the UI (D3 soft recommendation).

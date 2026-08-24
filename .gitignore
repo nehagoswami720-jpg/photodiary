@@ -9,6 +9,9 @@ dist/
 .env
 .env.*
 
+# phase 0 throwaway probe (disposable, not part of the product)
+phase0-probe/
+
 # os / editor
 .DS_Store
 *.log

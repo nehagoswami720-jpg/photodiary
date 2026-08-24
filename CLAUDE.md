@@ -60,7 +60,17 @@ Every entry: `{ id, photoBlob, capturedAt, lat, lon, placeName, source, createdA
 `capturedAt` keeps a UTC instant + original offset; `source` is `'exif' | 'manual'`.
 This shape is what makes v2 albums pure arithmetic — keep storing it from day one.
 
-## Open decisions (don't resolve unilaterally)
+## Settled by Phase 0 (2026-08-23)
 
-- Online vs. offline place-naming — decide from Phase 0 evidence (`D7`).
+- **Gate passed:** real camera-roll photos keep EXIF date + GPS (7/7). Proceed
+  to the engine. (`D12`)
+- **Geocoding:** online BigDataCloud endpoint, locked for v1. (`D13`)
+- **Place format:** smart — domestic → "City, Region", foreign → "City,
+  Country"; strip ISO artifacts like "(the)". (`D14`)
+
+## Still open (don't resolve unilaterally)
+
+- HEIC path is untested (all test files were JPEG) — verify if real `.heic`
+  files appear.
+- Persistent-storage strategy for Phase 3 (not auto-granted on first visit).
 - Whether an honesty disclosure belongs in the UI (`D3`).
