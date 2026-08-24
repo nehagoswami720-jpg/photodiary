@@ -175,3 +175,69 @@ Format: **Decision · Context · Choice · Why.**
   artifacts like "(the)".
 - **Why:** Reads the way a person would actually say where a photo was taken,
   and keeps the card calm.
+
+---
+
+## Phase 2 — building the screens from Figma
+
+Figma file: the "V2 Designs" page. It has **no published variables**, so all
+tokens are raw literals lifted directly from the design. Colors, fonts, weights,
+and the key letter-spacings are used **exactly**; the deviations below are all
+deliberate, made together in chat.
+
+### D15 — Scale the UI down for real browser viewports
+
+- **Context:** The Figma frames are 1728×1117 — far larger than a browser
+  window, so elements rendered oversized.
+- **Choice:** Scale the empty state down (upload box 868×465 → 620×340, camera
+  300×171 → 210×120, body text 36 → 24px) and **pin the title 48px from the top**
+  instead of Figma's vertically-centered position. Then scale the loading /
+  success / error screens to match (bar width 684 → 620, status text 20 → 18px).
+- **Why:** The designer asked for it on the empty state, then approved carrying
+  the same scale through the other screens for consistency. Exact Figma sizes
+  would have looked oversized next to the resized empty state.
+
+### D16 — Body font: system Helvetica stack (real Helvetica on Mac)
+
+- **Context:** The design uses Helvetica, which is proprietary and can't be
+  legally bundled as a web font.
+- **Choice:** Use the stack `"Helvetica Neue", Helvetica, Arial` (weight 300 =
+  Light, 400 = the button's Regular). Verified in-browser that this renders
+  genuine Helvetica Neue on macOS; non-Mac visitors fall back to Arial.
+- **Why:** It IS real Helvetica for the designer and every Mac/iOS visitor, at
+  zero cost. Guaranteeing Helvetica everywhere would need a paid Monotype web
+  license — deferred as overkill for v1.
+
+### D17 — Slimmer progress bar
+
+- **Choice:** Progress bar height 12px → **8px** across loading / success / error.
+- **Why:** The designer asked to slim it; reads more refined.
+
+### D18 — Calm, self-authored motion (not in the Figma)
+
+- **Context:** The Figma frames are static; motion was designed in chat.
+- **Choices:** MOMENTS wordmark — per-letter blur-fade entrance + a ~7s
+  breathing loop. Loading status text — cycles phrases on a slow independent
+  loop, each rising up from below with a soft crossfade, plus a dark "thinking"
+  shimmer (dark sweep because the base gray is already light) and blinking dots.
+  Success — bar eases black→green in place, confetti launches upward off the
+  bar. Error — bar eases black→red in place. **All honor
+  `prefers-reduced-motion`.**
+- **Why:** The product's whole feel is "quiet and calm"; motion had to match.
+
+### D19 — The error state emerges from the real flow
+
+- **Context:** The Figma error frame is static at 25%.
+- **Choice:** A dropped non-photo goes through the loading flow; a genuine
+  image-validity check (`createImageBitmap`) runs, and the bar stops and turns
+  red at the **actual % it had reached** at detection (varies run to run), not a
+  hardcoded number. HEIC is treated as valid (real photo, metadata readable even
+  when it can't be decoded for display).
+- **Why:** A static instant error isn't how a real interrupted upload behaves.
+
+### Two spacing values chosen by eye (not precise Figma tokens)
+
+Flagged for honesty — both are inside deliberately-scaled screens, and easy to
+snap to exact ratios if wanted:
+- Empty-state inner padding (px 28 / py 36) — proportional to the box scale-down.
+- Error button offset below the bar (40px; Figma's raw gap was 64px).

@@ -68,6 +68,16 @@ This shape is what makes v2 albums pure arithmetic — keep storing it from day 
 - **Place format:** smart — domestic → "City, Region", foreign → "City,
   Country"; strip ISO artifacts like "(the)". (`D14`)
 
+## Phase 2 progress (screens from Figma)
+
+Engine done (`src/lib`, `npm run verify`). Screens built: empty, loading,
+success, error (see `docs/09-build-log.md`). Next: the card, then manual entry.
+Figma tokens used exactly for color/font/weight/letter-spacing; deviations are
+chat-agreed — viewport scale-down + top-pinned title (`D15`), Helvetica stack
+(`D16`), slimmer bar (`D17`), self-authored calm motion (`D18`), error emerges
+from the real flow (`D19`). Deployed at photodiary-eight.vercel.app
+(`vercel --prod --yes`).
+
 ## Still open (don't resolve unilaterally)
 
 - HEIC path is untested (all test files were JPEG) — verify if real `.heic`
