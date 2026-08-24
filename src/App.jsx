@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 
-// Screen 1 — Empty State (built to match the Figma "Moments- Empty State").
+// Screen 1 — Empty State (built to match the Figma "Moments- Empty State",
+// scaled down for real browser viewport sizes).
 // The upload container is the drop / click target; later screens (loading,
 // card, manual entry, error) get wired in as we build them.
 export default function App() {
@@ -13,39 +14,41 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-[139px] bg-white py-12">
+    <div className="flex min-h-screen flex-col items-center bg-white">
       <h1
-        className="whitespace-nowrap text-[64px] leading-none tracking-[-0.64px] text-[#1a1a1a]"
+        className="mt-12 whitespace-nowrap text-[64px] leading-none tracking-[-0.64px] text-[#1a1a1a]"
         style={{ fontFamily: '"DM Serif Text", serif' }}
       >
         MOMENTS
       </h1>
 
-      <label
-        className="flex h-[465px] w-[868px] max-w-[90vw] cursor-pointer flex-col items-center justify-center gap-1 rounded-[6px] border border-dashed border-[#525252] px-10 py-[50px]"
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => {
-          e.preventDefault();
-          onFiles(e.dataTransfer.files);
-        }}
-      >
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*,.heic,.heif"
-          className="hidden"
-          onChange={(e) => onFiles(e.target.files)}
-        />
-        <img src="/camera.svg" alt="" className="h-[171px] w-[300px]" />
-        <p
-          className="w-[504px] max-w-full text-center text-[36px] leading-[41px] tracking-[-1.8px] text-[#333]"
-          style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', fontWeight: 300 }}
+      <div className="flex w-full flex-1 items-center justify-center">
+        <label
+          className="flex h-[340px] w-[620px] max-w-[90vw] cursor-pointer flex-col items-center justify-center gap-1 rounded-[6px] border border-dashed border-[#525252] px-7 py-9"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            onFiles(e.dataTransfer.files);
+          }}
         >
-          Start uploading your favorite
-          <br />
-          moments
-        </p>
-      </label>
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*,.heic,.heif"
+            className="hidden"
+            onChange={(e) => onFiles(e.target.files)}
+          />
+          <img src="/camera.svg" alt="" className="h-[120px] w-[210px]" />
+          <p
+            className="w-[360px] max-w-full text-center text-[24px] leading-[28px] tracking-[-1.2px] text-[#333]"
+            style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', fontWeight: 300 }}
+          >
+            Start uploading your favorite
+            <br />
+            moments
+          </p>
+        </label>
+      </div>
     </div>
   );
 }
