@@ -18,8 +18,20 @@ const PREVIEW = (() => {
   }
 })();
 
-function isImageFile(file) {
-  return (file.type && file.type.startsWith('image/')) || /\.(heic|heif)$/i.test(file.name);
+// Genuinely check whether the file can be read as an image. Returns false for
+// non-images (PDFs, text, corrupt files); true for real photos. HEIC often
+// can't be decoded by the browser but is still a valid photo we read metadata
+// from, so we don't fail it.
+async function isReadableImage(file) {
+  const isHeic = /\.(heic|heif)$/i.test(file.name) || (file.type || '').includes('hei');
+  if (file.type && !file.type.startsWith('image/') && !isHeic) return false;
+  try {
+    const bmp = await createImageBitmap(file);
+    bmp.close?.();
+    return true;
+  } catch {
+    return isHeic; // HEIC can't decode here but is still a real photo
+  }
 }
 
 // The viewer's home country (for the smart place format, D14). Derived from the
@@ -77,27 +89,29 @@ export default function App() {
       if (live()) setPercent(v);
     };
 
-    // A file that isn't a photo can't be read — fail honestly, before loading.
-    if (!isImageFile(file)) {
-      setFailPercent(25);
-      setScreen('error');
-      return;
-    }
-
     setScreen('loading');
     setPercent(0);
     setBusy(true); // starts the phrase loop
 
     try {
-      // Real work runs alongside the progress animation.
-      const data = await readPhotoData(file);
+      // Start reading the file; the bar climbs through the "reading" beat while
+      // we genuinely check whether it can be read as an image.
+      const validPromise = isReadableImage(file);
+      const readTarget = 30 + Math.floor(Math.random() * 16); // ~30–45%
+      await tween(0, readTarget, 1100, setPct);
       if (!live()) return;
-      await tween(0, 40, 1000, setPct);
+
+      // Detection point: if it isn't a readable image, stop the bar right here
+      // and turn it red — no fixed number, wherever the bar reached.
+      if (!(await validPromise)) throw new Error('unreadable');
+      if (!live()) return;
+
+      const data = await readPhotoData(file);
       if (!live()) return;
 
       // The geocode is the one genuine wait — ease toward 90 while it runs.
       const cardPromise = buildCard(data, { homeCountry: HOME_COUNTRY });
-      await tween(40, 90, 1300, setPct);
+      await tween(readTarget, 90, 1300, setPct);
       const card = await cardPromise;
       if (!live()) return;
 
@@ -111,7 +125,7 @@ export default function App() {
     } catch {
       if (!live()) return;
       setBusy(false);
-      setFailPercent(at > 8 ? at : 25);
+      setFailPercent(at); // the % the bar actually reached at detection
       setScreen('error');
     }
   }
