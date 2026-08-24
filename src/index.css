@@ -104,3 +104,25 @@
   .status-line { animation: none; }
   .status-dots .dot { animation: none; opacity: 1; }
 }
+
+/* --- Success confetti (plays once) --- */
+.confetti-piece {
+  position: absolute;
+  top: -14px;
+  width: 6px;
+  height: 10px;
+  border-radius: 1px;
+  opacity: 0;
+  animation-name: confetti-fall;
+  animation-timing-function: cubic-bezier(0.3, 0.6, 0.4, 1);
+  animation-fill-mode: forwards;
+  animation-iteration-count: 1;
+}
+@keyframes confetti-fall {
+  0%   { opacity: 0; transform: translateY(0) rotate(0deg); }
+  12%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(174px) rotate(var(--rot)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .confetti-piece { display: none; }
+}

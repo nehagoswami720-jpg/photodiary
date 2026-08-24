@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Wordmark from './components/Wordmark.jsx';
 import EmptyState from './screens/EmptyState.jsx';
 import Loading from './screens/Loading.jsx';
+import Success from './screens/Success.jsx';
 import { readPhotoData } from './lib/exif.js';
 import { buildCard } from './lib/card.js';
 
@@ -28,7 +29,7 @@ const PHRASES = [
 ];
 
 export default function App() {
-  const [screen, setScreen] = useState('empty'); // 'empty' | 'loading'
+  const [screen, setScreen] = useState('empty'); // 'empty' | 'loading' | 'success'
   const [percent, setPercent] = useState(0);
   const [status, setStatus] = useState(PHRASES[0]);
   const [busy, setBusy] = useState(false);
@@ -75,9 +76,9 @@ export default function App() {
     if (!live()) return;
     setPercent(100);
     setBusy(false); // stops the phrase loop
-    setStatus('ready');
     setCard(card);
-    // Next screen (success / the card) gets wired in here.
+    setScreen('success');
+    // The card screen gets wired in from here next.
   }
 
   return (
@@ -86,6 +87,7 @@ export default function App() {
       <div className="flex w-full flex-1 items-center justify-center">
         {screen === 'empty' && <EmptyState onFile={handleFile} />}
         {screen === 'loading' && <Loading percent={percent} status={status} />}
+        {screen === 'success' && <Success />}
       </div>
     </div>
   );
