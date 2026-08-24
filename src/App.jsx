@@ -18,8 +18,20 @@ export default function App() {
       <h1
         className="mt-12 whitespace-nowrap text-[64px] leading-none tracking-[-0.64px] text-[#1a1a1a]"
         style={{ fontFamily: '"DM Serif Text", serif' }}
+        aria-label="Moments"
       >
-        MOMENTS
+        <span className="title-breathe inline-block">
+          {'MOMENTS'.split('').map((letter, i) => (
+            <span
+              key={i}
+              className="title-letter"
+              style={{ animationDelay: `${i * 0.09}s` }}
+              aria-hidden="true"
+            >
+              {letter}
+            </span>
+          ))}
+        </span>
       </h1>
 
       <div className="flex w-full flex-1 items-center justify-center">

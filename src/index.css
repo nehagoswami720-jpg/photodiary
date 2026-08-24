@@ -1,1 +1,48 @@
 @import "tailwindcss";
+
+/* --- Calm motion for the MOMENTS wordmark --- */
+
+/* Each letter drifts up out of a soft blur and settles. */
+@keyframes letter-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.35em);
+    filter: blur(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* After the letters settle, the whole word breathes — barely perceptible. */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.012); }
+}
+
+.title-letter {
+  display: inline-block;
+  opacity: 0;
+  animation: letter-in 1.1s cubic-bezier(0.22, 0.68, 0.24, 1) both;
+}
+
+.title-breathe {
+  /* starts after the entrance finishes (~1.9s), then a slow 7s breath */
+  animation: breathe 7s ease-in-out 1.9s infinite;
+  transform-origin: center;
+}
+
+/* Respect people who prefer less motion — settle instantly, no breathing. */
+@media (prefers-reduced-motion: reduce) {
+  .title-letter {
+    animation: none;
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+  .title-breathe {
+    animation: none;
+  }
+}
