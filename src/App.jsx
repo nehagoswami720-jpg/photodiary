@@ -1,66 +1,104 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import Wordmark from './components/Wordmark.jsx';
+import EmptyState from './screens/EmptyState.jsx';
+import Loading from './screens/Loading.jsx';
+import { readPhotoData } from './lib/exif.js';
+import { buildCard } from './lib/card.js';
 
-// Screen 1 — Empty State (built to match the Figma "Moments- Empty State",
-// scaled down for real browser viewport sizes).
-// The upload container is the drop / click target; later screens (loading,
-// card, manual entry, error) get wired in as we build them.
+// The viewer's home country (for the smart place format, D14). Derived from the
+// browser locale; null if unknown, in which case place-format falls back to
+// "City, Country".
+const HOME_COUNTRY = (() => {
+  try {
+    return new Intl.Locale(navigator.language).maximize().region || null;
+  } catch {
+    return null;
+  }
+})();
+
 export default function App() {
-  const inputRef = useRef(null);
+  const [screen, setScreen] = useState('empty'); // 'empty' | 'loading'
+  const [percent, setPercent] = useState(0);
+  const [status, setStatus] = useState('');
+  const [, setCard] = useState(null); // held for the card screen (built next)
+  const runIdRef = useRef(0); // lets a newer upload cancel an in-flight one
 
-  function onFiles(fileList) {
-    const file = fileList?.[0];
+  async function handleFile(file) {
     if (!file) return;
-    // Next screen (loading) is not built yet — nothing happens on select for now.
+    const runId = ++runIdRef.current;
+    const live = () => runId === runIdRef.current;
+    const setPct = (v) => live() && setPercent(v);
+
+    setScreen('loading');
+    setPercent(0);
+    setStatus('reading your photo');
+
+    // Start the real work immediately; we pace the display so each real step is
+    // readable rather than flashing past.
+    const dataPromise = readPhotoData(file);
+
+    // Reading steps (near-instant in reality) — shown briefly so they register.
+    const readingSteps = [
+      { label: 'reading your photo', pct: 22 },
+      { label: 'reading the date', pct: 40 },
+      { label: 'reading the time', pct: 56 },
+      { label: 'finding the weekday', pct: 70 },
+    ];
+    let from = 0;
+    for (const step of readingSteps) {
+      if (!live()) return;
+      setStatus(step.label);
+      await tween(from, step.pct, 850, setPct); // each step readable, not flashing
+      from = step.pct;
+    }
+
+    const data = await dataPromise;
+    if (!live()) return;
+
+    // "Fetching place name" is the one genuinely variable wait — only show it
+    // when there are coordinates to look up, and let the bar honestly hold here
+    // until the network call resolves.
+    let card;
+    if (data.lat != null && data.lon != null) {
+      setStatus('fetching place name');
+      const cardPromise = buildCard(data, { homeCountry: HOME_COUNTRY });
+      await tween(from, 90, 520, setPct);
+      card = await cardPromise;
+    } else {
+      card = await buildCard(data, { homeCountry: HOME_COUNTRY });
+    }
+    if (!live()) return;
+
+    await tween(90, 100, 420, setPct);
+    if (!live()) return;
+    setPercent(100);
+    setStatus('ready');
+    setCard(card);
+    // Next screen (success / the card) gets wired in here.
   }
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-white">
-      <h1
-        className="mt-12 whitespace-nowrap text-[64px] leading-none tracking-[-0.64px] text-[#1a1a1a]"
-        style={{ fontFamily: '"DM Serif Text", serif' }}
-        aria-label="Moments"
-      >
-        <span className="title-breathe inline-block">
-          {'MOMENTS'.split('').map((letter, i) => (
-            <span
-              key={i}
-              className="title-letter"
-              style={{ animationDelay: `${i * 0.09}s` }}
-              aria-hidden="true"
-            >
-              {letter}
-            </span>
-          ))}
-        </span>
-      </h1>
-
+      <Wordmark />
       <div className="flex w-full flex-1 items-center justify-center">
-        <label
-          className="flex h-[340px] w-[620px] max-w-[90vw] cursor-pointer flex-col items-center justify-center gap-1 rounded-[6px] border border-dashed border-[#525252] px-7 py-9"
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            onFiles(e.dataTransfer.files);
-          }}
-        >
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*,.heic,.heif"
-            className="hidden"
-            onChange={(e) => onFiles(e.target.files)}
-          />
-          <img src="/camera.svg" alt="" className="h-[120px] w-[210px]" />
-          <p
-            className="w-[360px] max-w-full text-center text-[24px] leading-[28px] tracking-[-1.2px] text-[#333]"
-            style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', fontWeight: 300 }}
-          >
-            Start uploading your favorite
-            <br />
-            moments
-          </p>
-        </label>
+        {screen === 'empty' && <EmptyState onFile={handleFile} />}
+        {screen === 'loading' && <Loading percent={percent} status={status} />}
       </div>
     </div>
   );
+}
+
+// Animate a number from -> to over `ms`, easing in/out, via requestAnimationFrame.
+function tween(from, to, ms, onUpdate) {
+  return new Promise((resolve) => {
+    const start = performance.now();
+    function frame(now) {
+      const t = Math.min(1, (now - start) / ms);
+      const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      onUpdate(Math.round(from + (to - from) * eased));
+      if (t < 1) requestAnimationFrame(frame);
+      else resolve();
+    }
+    requestAnimationFrame(frame);
+  });
 }
