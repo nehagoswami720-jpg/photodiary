@@ -105,23 +105,23 @@
   .status-dots .dot { animation: none; opacity: 1; }
 }
 
-/* --- Success confetti (plays once) --- */
+/* --- Success confetti (plays once, launches up off the bar) --- */
 .confetti-piece {
   position: absolute;
-  top: -14px;
+  bottom: 0; /* starts at the top edge of the bar */
   width: 6px;
   height: 10px;
   border-radius: 1px;
   opacity: 0;
-  animation-name: confetti-fall;
-  animation-timing-function: cubic-bezier(0.3, 0.6, 0.4, 1);
+  animation-name: confetti-rise;
+  animation-timing-function: cubic-bezier(0.2, 0.5, 0.3, 1);
   animation-fill-mode: forwards;
   animation-iteration-count: 1;
 }
-@keyframes confetti-fall {
-  0%   { opacity: 0; transform: translateY(0) rotate(0deg); }
+@keyframes confetti-rise {
+  0%   { opacity: 0; transform: translate(0, 0) rotate(0deg); }
   12%  { opacity: 1; }
-  100% { opacity: 0; transform: translateY(174px) rotate(var(--rot)); }
+  100% { opacity: 0; transform: translate(var(--dx), -168px) rotate(var(--rot)); }
 }
 @media (prefers-reduced-motion: reduce) {
   .confetti-piece { display: none; }
