@@ -12,7 +12,7 @@ export default function Loading({ percent, status }) {
 
       {/* status message (left) + percentage (right) */}
       <div
-        className="flex items-center justify-between text-[18px] leading-none tracking-[-0.5px] text-[#767676]"
+        className="flex items-center justify-between pb-1 text-[18px] leading-[1.5] tracking-[-0.6px] text-[#767676]"
         style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', fontWeight: 300 }}
       >
         <span key={status} className="status-line inline-flex items-baseline">

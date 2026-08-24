@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Wordmark from './components/Wordmark.jsx';
 import EmptyState from './screens/EmptyState.jsx';
 import Loading from './screens/Loading.jsx';
@@ -16,12 +16,38 @@ const HOME_COUNTRY = (() => {
   }
 })();
 
+// Status phrases shown while loading. They cycle on their own slow loop and are
+// intentionally NOT tied to the exact progress stage — just calm, changing text.
+const PHRASES = [
+  'reading your photo',
+  'reading the date',
+  'reading the time',
+  'finding the weekday',
+  'fetching place name',
+  'almost there',
+];
+
 export default function App() {
   const [screen, setScreen] = useState('empty'); // 'empty' | 'loading'
   const [percent, setPercent] = useState(0);
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState(PHRASES[0]);
+  const [busy, setBusy] = useState(false);
   const [, setCard] = useState(null); // held for the card screen (built next)
   const runIdRef = useRef(0); // lets a newer upload cancel an in-flight one
+
+  // Cycle the status phrases on a slow loop while busy (random, no repeats).
+  useEffect(() => {
+    if (!busy) return;
+    let last = 0;
+    setStatus(PHRASES[0]);
+    const id = setInterval(() => {
+      let next = last;
+      while (next === last) next = Math.floor(Math.random() * PHRASES.length);
+      last = next;
+      setStatus(PHRASES[next]);
+    }, 1900);
+    return () => clearInterval(id);
+  }, [busy]);
 
   async function handleFile(file) {
     if (!file) return;
@@ -31,47 +57,24 @@ export default function App() {
 
     setScreen('loading');
     setPercent(0);
-    setStatus('reading your photo');
+    setBusy(true); // starts the phrase loop
 
-    // Start the real work immediately; we pace the display so each real step is
-    // readable rather than flashing past.
-    const dataPromise = readPhotoData(file);
-
-    // Reading steps (near-instant in reality) — shown briefly so they register.
-    const readingSteps = [
-      { label: 'reading your photo', pct: 22 },
-      { label: 'reading the date', pct: 40 },
-      { label: 'reading the time', pct: 56 },
-      { label: 'finding the weekday', pct: 70 },
-    ];
-    let from = 0;
-    for (const step of readingSteps) {
-      if (!live()) return;
-      setStatus(step.label);
-      await tween(from, step.pct, 850, setPct); // each step readable, not flashing
-      from = step.pct;
-    }
-
-    const data = await dataPromise;
+    // Real work runs alongside the progress animation.
+    const data = await readPhotoData(file);
+    if (!live()) return;
+    await tween(0, 40, 1000, setPct);
     if (!live()) return;
 
-    // "Fetching place name" is the one genuinely variable wait — only show it
-    // when there are coordinates to look up, and let the bar honestly hold here
-    // until the network call resolves.
-    let card;
-    if (data.lat != null && data.lon != null) {
-      setStatus('fetching place name');
-      const cardPromise = buildCard(data, { homeCountry: HOME_COUNTRY });
-      await tween(from, 90, 520, setPct);
-      card = await cardPromise;
-    } else {
-      card = await buildCard(data, { homeCountry: HOME_COUNTRY });
-    }
+    // The geocode is the one genuine wait — ease toward 90 while it runs.
+    const cardPromise = buildCard(data, { homeCountry: HOME_COUNTRY });
+    await tween(40, 90, 1300, setPct);
+    const card = await cardPromise;
     if (!live()) return;
 
-    await tween(90, 100, 420, setPct);
+    await tween(90, 100, 400, setPct);
     if (!live()) return;
     setPercent(100);
+    setBusy(false); // stops the phrase loop
     setStatus('ready');
     setCard(card);
     // Next screen (success / the card) gets wired in here.
