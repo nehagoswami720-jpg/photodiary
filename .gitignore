@@ -17,3 +17,4 @@ phase0-probe/
 *.log
 .vscode/
 .idea/
+.vercel
