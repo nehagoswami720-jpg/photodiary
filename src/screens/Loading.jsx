@@ -5,8 +5,8 @@
 export default function Loading({ percent, status }) {
   return (
     <div className="flex w-[620px] max-w-[90vw] flex-col gap-2">
-      {/* progress bar (matches Figma: #d9d9d9 track, #080808 fill, 12px) */}
-      <div className="h-[12px] w-full bg-[#d9d9d9]">
+      {/* progress bar (#d9d9d9 track, #080808 fill; slightly slimmer than Figma's 12px) */}
+      <div className="h-[8px] w-full bg-[#d9d9d9]">
         <div className="h-full bg-[#080808]" style={{ width: `${percent}%` }} />
       </div>
 

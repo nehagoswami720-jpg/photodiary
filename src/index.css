@@ -73,14 +73,14 @@
   to   { background-position: -100% 0; }
 }
 
-/* Each new phrase fades up gently as it swaps in (component is keyed to remount).
-   Kept short so the phrase settles well before the next swap. */
+/* Each new phrase crossfades in softly (component is keyed to remount).
+   Pure opacity ease — no blur or jump — so the change feels gentle. */
 .status-line {
-  animation: status-in 0.3s cubic-bezier(0.22, 0.68, 0.24, 1) both;
+  animation: status-in 0.55s ease-in-out both;
 }
 @keyframes status-in {
-  from { opacity: 0; transform: translateY(3px); filter: blur(3px); }
-  to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 /* Trailing dots blink in sequence. */

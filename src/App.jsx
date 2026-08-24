@@ -45,7 +45,7 @@ export default function App() {
       while (next === last) next = Math.floor(Math.random() * PHRASES.length);
       last = next;
       setStatus(PHRASES[next]);
-    }, 1900);
+    }, 1200);
     return () => clearInterval(id);
   }, [busy]);
 
