@@ -73,14 +73,14 @@
   to   { background-position: -100% 0; }
 }
 
-/* Each new phrase crossfades in softly (component is keyed to remount).
-   Pure opacity ease — no blur or jump — so the change feels gentle. */
+/* Each new phrase rises up from below into place (component is keyed to remount).
+   A soft decelerating ease so it settles gently rather than snapping. */
 .status-line {
-  animation: status-in 0.55s ease-in-out both;
+  animation: status-in 0.5s cubic-bezier(0.16, 0.84, 0.3, 1) both;
 }
 @keyframes status-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from { opacity: 0; transform: translateY(0.7em); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* Trailing dots blink in sequence. */
