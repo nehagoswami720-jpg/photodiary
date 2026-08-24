@@ -32,25 +32,56 @@ product built on trust, is worse than showing less. The entire project is a
 series of choices that pick **honesty over impressiveness**, and the product
 gets *stronger* each time it does.
 
-## The narrative arc — scoping as a design skill
+## The riskiest assumptions we surfaced
 
-The most portfolio-worthy thread: **three deliberate cuts, each making the
-product better, not weaker.**
+Before any design, we listed the assumptions that — if false — mean the app
+doesn't work, ranked by danger. This is the **full original picture**, before
+the simplifications below shrank it. It's the evidence of rigor: the product
+was pressure-tested on paper before a pixel was drawn.
 
-1. **Cut historical weather.** It was the emotional centerpiece of the original
-   pitch — but gridded, hourly reanalysis data can be accurate yet *feel*
-   wrong. Cutting it deleted the single scariest risk and removed the only hard
-   network dependency. *(Decision D2.)*
-2. **Cut mobile.** Chasing "works on mobile too" dragged in three real
-   complexities (metadata-stripping file pickers, storage eviction, PWA
-   machinery) that had nothing to do with proving the core idea. Cutting it
-   removed all three at once. *(Decision D8.)*
-3. **Cut to four data points.** Location, weekday, date, time — three of which
-   come straight off the photo with zero network. The smallest card that is
-   still complete and honest. *(Decision D6.)*
+| # | Assumption (if false, the app breaks) | Why it was scary |
+|---|----------------------------------------|------------------|
+| **R1** | Real camera-roll photos still carry **EXIF date + GPS** when they reach a browser | Sharing / screenshots / downloads strip it. If most real photos are bare, manual entry becomes the *main* flow — a different product. |
+| **R2** | We can **read EXIF from HEIC** (Apple's default) in-browser | Browsers can't *display* HEIC without a heavy converter; had to confirm the card works even when the thumbnail can't. |
+| **R3** | Historical **weather** is accurate *and feels true* | Reanalysis data is gridded (~10–25 km) and hourly — it can be right yet *feel* wrong. For a trust product, that's the worst failure mode. |
+| **R4** | GPS reliably becomes a **nice place name** ("Lisbon") | The one external dependency; degrades to ugly coordinates if unhandled. |
+| **R5** | We can get the **timezone right** for time + weekday | EXIF time is local wall-clock with no zone. Wrong zone = wrong "6:12" / "Tuesday" = an honesty violation. |
+| **R6** | **IndexedDB** won't silently evict the diary | Browsers drop local storage under pressure; a diary that loses entries is heartbreaking. |
+| **R7** | One quiet card actually **feels meaningful** | A design/emotional risk, not technical — cheapest to test on paper before code. |
 
-**The takeaway line:** *Every time the scope got smaller, the product got more
-honest — and more buildable.*
+And when we *briefly* considered mobile, two more risks appeared: mobile file
+pickers that mangle or strip metadata, and mobile Safari evicting IndexedDB
+after ~7 days. Every risk was paired with the smallest throwaway test that
+would settle it — see `03-risks-and-tests.md`.
+
+## How the designer drove the simplification
+
+The turning point of the process was the **client making sharp product calls
+that collapsed the risk table above.** This was collaboration, not dictation —
+the plan got smaller and safer because of the designer's instincts, not in
+spite of them. Each call, and what it bought:
+
+- **"Extract only location, day, date, and time."** One decision killed **R3**
+  entirely (weather), removed the only hard-network dependency, and cut the
+  card to its honest essentials. *(→ D6, D2)*
+- **"Web only — no mobile app."** Erased the two mobile-specific risks
+  (metadata-stripping pickers, 7-day storage eviction) and all PWA machinery in
+  a single stroke. *(→ D8)*
+- **"Manual entry as the fallback."** Turned the scariest technical risk
+  (**R1**, stripped EXIF) from a dead end into a graceful path — the user
+  supplies the truth, the app still never invents it. *(→ D5)*
+- **"Save it — it's a diary."** Committed to persistence, which also quietly
+  established the data model that makes v2 albums almost free. *(→ D4)*
+- **"Decide place-naming after testing."** Refused to guess online-vs-offline in
+  the abstract; deferred it to evidence from real photos. *(→ D7)*
+
+**Before → after.** The risk surface shrank from **seven technical risks, plus
+two mobile risks and a hard weather dependency**, down to **five contained
+risks and a single, degradable place-naming dependency** — without losing the
+core experience.
+
+**The takeaway line:** *Every time the designer made the scope smaller, the
+product got more honest — and more buildable.*
 
 ## Process to show
 
