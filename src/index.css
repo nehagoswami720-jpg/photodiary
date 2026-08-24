@@ -118,6 +118,27 @@
   .success-bar { animation: none; }
 }
 
+/* The bar eases from the loading black into red when an error lands. */
+.error-fill {
+  background-color: #de0000;
+  animation: fill-to-red 0.5s ease forwards;
+}
+@keyframes fill-to-red {
+  from { background-color: #080808; }
+  to   { background-color: #de0000; }
+}
+.error-btn {
+  animation: btn-up 0.5s cubic-bezier(0.16, 0.84, 0.3, 1) 0.15s both;
+}
+@keyframes btn-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .error-fill { animation: none; }
+  .error-btn { animation: none; }
+}
+
 /* --- Success confetti (plays once, launches up off the bar) --- */
 .confetti-piece {
   position: absolute;
