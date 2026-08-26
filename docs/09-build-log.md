@@ -47,7 +47,7 @@ only where chat-agreed: the viewport scale-down (D15), slimmer bar (D17),
 top-pinned title (D15). Motion (D18) and the dynamic error (D19) were authored
 beyond the static frames. See `06-decisions.md` D15–D19.
 
-## v1 complete
+## v1 complete + v2 gallery (first iteration)
 
 All screens built + wired, and **persistence (IndexedDB) done** — the diary
 survives reloads (most-recent card returns; "+ add another" for a new photo).

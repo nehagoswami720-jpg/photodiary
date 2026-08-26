@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { formatDate, formatTime } from '../lib/format.js';
 
 // The hero card — one photo at its natural aspect (never cropped), with
 // place · weekday+date · time, read from the photo's own EXIF. Any field that
@@ -8,27 +9,6 @@ import { useEffect, useRef, useState } from 'react';
 //
 // The text row is constrained to the image's actual rendered width, so on a
 // tall/narrow photo the place name wraps instead of bleeding past the edges.
-const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'];
-
-function ordinal(n) {
-  const v = n % 100;
-  const suffix = ['th', 'st', 'nd', 'rd'];
-  return n + (suffix[(v - 20) % 10] || suffix[v] || suffix[0]);
-}
-
-function formatDate(d) {
-  return `${WEEKDAYS[d.getDay()]}, ${ordinal(d.getDate())} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-}
-
-function formatTime(d) {
-  let h = d.getHours();
-  const ampm = h >= 12 ? 'pm' : 'am';
-  h = h % 12 || 12;
-  return `${h}.${String(d.getMinutes()).padStart(2, '0')} ${ampm}`;
-}
-
 export default function Card({ place, capturedAt, imageUrl, showTime = true }) {
   const imgRef = useRef(null);
   const [width, setWidth] = useState(null); // the image's rendered width

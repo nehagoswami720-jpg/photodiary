@@ -328,3 +328,26 @@ values from Figma:
 - **`navigator.storage.persist()`** requested on save so the browser is less
   likely to evict the diary (granted based on engagement; fine if not).
 - Verified: drop a photo → reach a card → reload → the card comes back.
+
+---
+
+## v2 — the gallery
+
+### D25 — The gallery grid (v2, first iteration)
+
+- **Context:** v2 makes the app a browsable diary. Scope agreed: a **flat
+  masonry grid of all moments** (no album grouping yet), the grid is "home",
+  tapping a grid moment does nothing this iteration.
+- **Why it's a light build:** everything is read from the entries v1 already
+  persists — no new dependencies, no backend, no grouping algorithm.
+- **Screens/nav:** app opens to `Gallery` (or the drop zone if empty).
+  "+ add a moment" (floating button) → the existing upload flow → card reveal →
+  "← back to moments" returns to the grid (now including the new moment).
+- **Grid:** CSS multi-column masonry (2 cols / 3 wide), newest first; each cell
+  is `MomentCard` (photo at column width + place/date/time, honest omissions).
+  A fixed bottom **fade** so the grid reveals as you scroll. Object URLs per
+  blob, revoked on unmount.
+- **Reuse:** shared `lib/format.js` (date/time) across the hero card and the
+  grid cell; `getAllEntries()` added to `lib/db.js`.
+- **Deferred:** album grouping by time+location gaps, and a detail view when
+  tapping a grid moment.

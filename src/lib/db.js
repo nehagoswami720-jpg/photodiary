@@ -49,6 +49,27 @@ export async function getLatestEntry() {
   });
 }
 
+// All entries, newest first.
+export async function getAllEntries() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).index('createdAt').openCursor(null, 'prev');
+    const out = [];
+    req.onsuccess = () => {
+      const cursor = req.result;
+      if (cursor) {
+        out.push(cursor.value);
+        cursor.continue();
+      } else {
+        db.close();
+        resolve(out);
+      }
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
 // Ask the browser to keep this data (so it isn't evicted under pressure).
 export async function requestPersistence() {
   try {

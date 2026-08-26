@@ -7,9 +7,10 @@ import ErrorState from './screens/ErrorState.jsx';
 import Card from './screens/Card.jsx';
 import ManualIntro from './screens/ManualIntro.jsx';
 import ManualForm from './screens/ManualForm.jsx';
+import Gallery from './screens/Gallery.jsx';
 import { readPhotoData } from './lib/exif.js';
 import { buildCard } from './lib/card.js';
-import { saveEntry, getLatestEntry, requestPersistence } from './lib/db.js';
+import { saveEntry, getAllEntries, requestPersistence } from './lib/db.js';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 const HELVETICA = '"Helvetica Neue", Helvetica, Arial, sans-serif';
@@ -79,7 +80,8 @@ const PHRASES = [
 ];
 
 export default function App() {
-  const [screen, setScreen] = useState(PREVIEW || 'empty'); // 'empty' | 'loading' | 'success' | 'error'
+  const [screen, setScreen] = useState(PREVIEW || null); // null until the diary loads
+  const [entries, setEntries] = useState([]); // all saved moments (for the gallery)
   const [percent, setPercent] = useState(0);
   const [status, setStatus] = useState(PHRASES[0]);
   const [busy, setBusy] = useState(false);
@@ -92,22 +94,29 @@ export default function App() {
   const runIdRef = useRef(0); // lets a newer upload cancel an in-flight one
   const pendingRef = useRef(null); // the current photo blob + coords, for saving
 
-  // On load, show the most recent saved entry (the diary persists across reloads).
+  // On load, open the gallery of saved moments (or the drop zone if empty).
   useEffect(() => {
     if (PREVIEW) return;
-    getLatestEntry()
-      .then((entry) => {
-        if (!entry) return;
-        setResult({
-          place: entry.place,
-          capturedAt: entry.capturedAt,
-          showTime: entry.showTime,
-          imageUrl: URL.createObjectURL(entry.photoBlob),
-        });
-        setScreen('card');
+    getAllEntries()
+      .then((all) => {
+        setEntries(all);
+        setScreen(all.length ? 'gallery' : 'empty');
       })
-      .catch(() => {});
+      .catch(() => setScreen('empty'));
   }, []);
+
+  // Return to the gallery (reloading moments); the drop zone if the diary is empty.
+  async function goHome() {
+    runIdRef.current++; // cancel any in-flight run
+    setBusy(false);
+    setPercent(0);
+    pendingRef.current = null;
+    if (result?.imageUrl) URL.revokeObjectURL(result.imageUrl);
+    setResult(null);
+    const all = await getAllEntries().catch(() => []);
+    setEntries(all);
+    setScreen(all.length ? 'gallery' : 'empty');
+  }
 
   // Persist the current photo + card facts (best-effort). photoBlob is what lets
   // the card come back on reload; lat/lon are kept for v2 albums.
@@ -239,33 +248,17 @@ export default function App() {
     setScreen('card');
   }
 
-  // Start fresh for a new photo; saved entries stay in the diary.
-  function addAnother() {
-    runIdRef.current++;
-    pendingRef.current = null;
-    setBusy(false);
-    setPercent(0);
-    setResult(null);
-    setScreen('empty');
-  }
-
-  function reset() {
-    runIdRef.current++; // cancel any in-flight run
-    setBusy(false);
-    setPercent(0);
-    if (result?.imageUrl) URL.revokeObjectURL(result.imageUrl);
-    setResult(null);
-    setScreen('empty');
-  }
-
   return (
     <div className="flex min-h-screen flex-col items-center bg-white">
       <Wordmark />
-      <div className="flex w-full flex-1 items-center justify-center py-10">
-        {screen === 'empty' && <EmptyState onFile={handleFile} />}
+      {screen === 'gallery' ? (
+        <Gallery entries={entries} onAddMoment={handleFile} />
+      ) : (
+        <div className="flex w-full flex-1 items-center justify-center py-10">
+          {screen === 'empty' && <EmptyState onFile={handleFile} />}
         {screen === 'loading' && <Loading percent={percent} status={status} />}
         {screen === 'success' && <Success />}
-        {screen === 'error' && <ErrorState percent={failPercent} onRetry={reset} />}
+        {screen === 'error' && <ErrorState percent={failPercent} onRetry={goHome} />}
         {screen === 'card' && result && (
           <div className="flex flex-col items-center gap-8">
             <Card
@@ -276,11 +269,11 @@ export default function App() {
             />
             <button
               type="button"
-              onClick={addAnother}
+              onClick={goHome}
               className="text-[14px] text-[#a0a0a0] transition-colors hover:text-[#333]"
               style={{ fontFamily: HELVETICA }}
             >
-              + add another
+              ← back to moments
             </button>
           </div>
         )}
@@ -294,7 +287,8 @@ export default function App() {
         {screen === 'form' && result && (
           <ManualForm imageUrl={result.imageUrl} onSubmit={submitManual} />
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
