@@ -47,11 +47,18 @@ only where chat-agreed: the viewport scale-down (D15), slimmer bar (D17),
 top-pinned title (D15). Motion (D18) and the dynamic error (D19) were authored
 beyond the static frames. See `06-decisions.md` D15–D19.
 
-## Still open
+## v1 complete
+
+All screens built + wired, and **persistence (IndexedDB) done** — the diary
+survives reloads (most-recent card returns; "+ add another" for a new photo).
+Engine proven, deployed on Vercel. The v1 "done" checklist in `01-v1-spec.md`
+is fully met.
+
+## Still open (minor / v2)
 
 - HEIC decode-for-display untested (metadata path works; treated as valid).
-- Persistent-storage strategy (Phase 3).
-- Persistence (IndexedDB), then v2. Manual-entry form done.
+- Persistent-storage grant depends on browser engagement (requested; best-effort).
+- v2: the albums/gallery view, and the design-system pass (below).
 
 ## Deferred to v2 — design-system pass
 

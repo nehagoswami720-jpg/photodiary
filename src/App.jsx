@@ -9,8 +9,10 @@ import ManualIntro from './screens/ManualIntro.jsx';
 import ManualForm from './screens/ManualForm.jsx';
 import { readPhotoData } from './lib/exif.js';
 import { buildCard } from './lib/card.js';
+import { saveEntry, getLatestEntry, requestPersistence } from './lib/db.js';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+const HELVETICA = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 
 // Preview hook: open with ?state=error|success|card to jump straight to a
 // screen for design review, since these states are otherwise hard to reach.
@@ -88,6 +90,47 @@ export default function App() {
     return null;
   }); // { place, capturedAt, imageUrl, showTime }
   const runIdRef = useRef(0); // lets a newer upload cancel an in-flight one
+  const pendingRef = useRef(null); // the current photo blob + coords, for saving
+
+  // On load, show the most recent saved entry (the diary persists across reloads).
+  useEffect(() => {
+    if (PREVIEW) return;
+    getLatestEntry()
+      .then((entry) => {
+        if (!entry) return;
+        setResult({
+          place: entry.place,
+          capturedAt: entry.capturedAt,
+          showTime: entry.showTime,
+          imageUrl: URL.createObjectURL(entry.photoBlob),
+        });
+        setScreen('card');
+      })
+      .catch(() => {});
+  }, []);
+
+  // Persist the current photo + card facts (best-effort). photoBlob is what lets
+  // the card come back on reload; lat/lon are kept for v2 albums.
+  async function saveCurrent({ place, capturedAt, showTime, source }) {
+    const p = pendingRef.current;
+    if (!p) return;
+    try {
+      await saveEntry({
+        id: crypto.randomUUID(),
+        photoBlob: p.file,
+        place: place ?? null,
+        capturedAt: capturedAt ?? null,
+        showTime: !!showTime,
+        lat: p.lat ?? null,
+        lon: p.lon ?? null,
+        source,
+        createdAt: new Date(),
+      });
+      requestPersistence();
+    } catch {
+      /* keep working even if saving fails */
+    }
+  }
 
   // Cycle the status phrases on a slow loop while busy (random, no repeats).
   useEffect(() => {
@@ -132,6 +175,7 @@ export default function App() {
 
       const data = await readPhotoData(file);
       if (!live()) return;
+      pendingRef.current = { file, lat: data.lat, lon: data.lon };
 
       // The geocode is the one genuine wait — ease toward 90 while it runs.
       const cardPromise = buildCard(data, { homeCountry: HOME_COUNTRY });
@@ -150,7 +194,12 @@ export default function App() {
       // couldn't be detected, invite manual entry instead.
       await delay(1800);
       if (!live()) return;
-      setScreen(card.place ? 'card' : 'manual');
+      if (card.place) {
+        saveCurrent({ place: card.place, capturedAt: data.capturedAt, showTime: true, source: 'exif' });
+        setScreen('card');
+      } else {
+        setScreen('manual');
+      }
     } catch {
       if (!live()) return;
       setBusy(false);
@@ -175,7 +224,29 @@ export default function App() {
       }
     }
     setResult((prev) => ({ place, capturedAt, showTime, imageUrl: prev?.imageUrl }));
+    saveCurrent({ place, capturedAt, showTime, source: 'manual' });
     setScreen('card');
+  }
+
+  // "Skip" on the manual invitation → keep the photo (and any EXIF date), no place.
+  function skipManual() {
+    saveCurrent({
+      place: null,
+      capturedAt: result?.capturedAt ?? null,
+      showTime: result?.showTime ?? false,
+      source: 'exif',
+    });
+    setScreen('card');
+  }
+
+  // Start fresh for a new photo; saved entries stay in the diary.
+  function addAnother() {
+    runIdRef.current++;
+    pendingRef.current = null;
+    setBusy(false);
+    setPercent(0);
+    setResult(null);
+    setScreen('empty');
   }
 
   function reset() {
@@ -196,18 +267,28 @@ export default function App() {
         {screen === 'success' && <Success />}
         {screen === 'error' && <ErrorState percent={failPercent} onRetry={reset} />}
         {screen === 'card' && result && (
-          <Card
-            place={result.place}
-            capturedAt={result.capturedAt}
-            imageUrl={result.imageUrl}
-            showTime={result.showTime}
-          />
+          <div className="flex flex-col items-center gap-8">
+            <Card
+              place={result.place}
+              capturedAt={result.capturedAt}
+              imageUrl={result.imageUrl}
+              showTime={result.showTime}
+            />
+            <button
+              type="button"
+              onClick={addAnother}
+              className="text-[14px] text-[#a0a0a0] transition-colors hover:text-[#333]"
+              style={{ fontFamily: HELVETICA }}
+            >
+              + add another
+            </button>
+          </div>
         )}
         {screen === 'manual' && result && (
           <ManualIntro
             imageUrl={result.imageUrl}
             onAddDetails={() => setScreen('form')}
-            onSkip={() => setScreen('card')}
+            onSkip={skipManual}
           />
         )}
         {screen === 'form' && result && (

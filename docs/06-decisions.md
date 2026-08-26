@@ -312,3 +312,19 @@ values from Figma:
   soft-filled rounded pills (light-grey, hover-highlight) with small line icons
   (pin / calendar / clock) and a caret that rotates open — replacing the bare
   underlines.
+
+### D24 — Persistence (IndexedDB) — the diary survives reloads
+
+- **Context:** The last v1 item. Entries must persist so it's a real diary (and
+  it's the data spine v2 albums sort).
+- **Storage:** `lib/db.js` — one IndexedDB store of entries
+  `{ id, photoBlob, place, capturedAt, showTime, lat, lon, source, createdAt }`.
+  The photo is stored as a Blob so the card can be re-rendered on reload.
+- **Reload behaviour (Option A):** on load, show the most-recent entry's card.
+  A quiet "+ add another" under the card starts a new photo; earlier entries
+  stay saved (browsing all of them = the v2 gallery).
+- **Saved at every card-entry point:** EXIF card, manual submit, and "Skip"
+  (photo-only). Best-effort — the app still works if storage fails.
+- **`navigator.storage.persist()`** requested on save so the browser is less
+  likely to evict the diary (granted based on engagement; fine if not).
+- Verified: drop a photo → reach a card → reload → the card comes back.
