@@ -5,6 +5,7 @@ import Loading from './screens/Loading.jsx';
 import Success from './screens/Success.jsx';
 import ErrorState from './screens/ErrorState.jsx';
 import Card from './screens/Card.jsx';
+import ManualIntro from './screens/ManualIntro.jsx';
 import { readPhotoData } from './lib/exif.js';
 import { buildCard } from './lib/card.js';
 
@@ -15,7 +16,7 @@ const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 const PREVIEW = (() => {
   try {
     const s = new URLSearchParams(window.location.search).get('state');
-    return s === 'error' || s === 'success' || s === 'card' ? s : null;
+    return ['error', 'success', 'card', 'manual'].includes(s) ? s : null;
   } catch {
     return null;
   }
@@ -80,7 +81,11 @@ export default function App() {
   const [status, setStatus] = useState(PHRASES[0]);
   const [busy, setBusy] = useState(false);
   const [failPercent, setFailPercent] = useState(25);
-  const [result, setResult] = useState(PREVIEW === 'card' ? SAMPLE_CARD : null); // { place, capturedAt, imageUrl }
+  const [result, setResult] = useState(() => {
+    if (PREVIEW === 'card') return SAMPLE_CARD;
+    if (PREVIEW === 'manual') return { place: null, capturedAt: null, imageUrl: SAMPLE_IMG };
+    return null;
+  }); // { place, capturedAt, imageUrl }
   const runIdRef = useRef(0); // lets a newer upload cancel an in-flight one
 
   // Cycle the status phrases on a slow loop while busy (random, no repeats).
@@ -140,10 +145,11 @@ export default function App() {
       setResult({ place: card.place, capturedAt: data.capturedAt, imageUrl: URL.createObjectURL(file) });
       setScreen('success');
 
-      // Let the success beat breathe, then reveal the card.
+      // Let the success beat breathe, then reveal the card — or, when the place
+      // couldn't be detected, invite manual entry instead.
       await delay(1800);
       if (!live()) return;
-      setScreen('card');
+      setScreen(card.place ? 'card' : 'manual');
     } catch {
       if (!live()) return;
       setBusy(false);
@@ -171,6 +177,13 @@ export default function App() {
         {screen === 'error' && <ErrorState percent={failPercent} onRetry={reset} />}
         {screen === 'card' && result && (
           <Card place={result.place} capturedAt={result.capturedAt} imageUrl={result.imageUrl} />
+        )}
+        {screen === 'manual' && result && (
+          <ManualIntro
+            imageUrl={result.imageUrl}
+            onAddDetails={() => {}} // → the entry form (screen 2), built next
+            onSkip={() => setScreen('card')}
+          />
         )}
       </div>
     </div>

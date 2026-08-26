@@ -263,3 +263,17 @@ values from Figma:
   image's measured rendered width (`ResizeObserver`), and the place name wraps
   within it on tall/narrow photos rather than bleeding out.
 - **Transition:** success beat breathes ~1.8s, then the card fades/rises in.
+
+### D21 — Manual entry, screen 1: the invitation
+
+- **Context:** When a photo's place can't be detected, the fallback is manual
+  entry. First screen is the invitation (Figma 136:277).
+- **Trigger:** after the success beat, if `place` is null → show the invitation
+  instead of the card (if place is detected → straight to the card).
+- **Choices:** photo shown uncropped but smaller than the hero card (fits the
+  composition); type scaled to match the app; the "Add the details" button
+  reuses the error button's treatment. Copy verbatim from the design ("This
+  moment came without its story." / "Some photos don't remember where or when
+  they were taken. You can add it, if you like.").
+- **Wiring:** "Skip" → the photo-only card. "Add the details" → the entry form
+  (screen 2), which is built next; currently a stub. Preview: `?state=manual`.
