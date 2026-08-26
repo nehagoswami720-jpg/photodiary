@@ -58,7 +58,7 @@ export default function Card({ place, capturedAt, imageUrl }) {
         className="flex items-start justify-between gap-4"
         style={{ width: width ? `${width}px` : undefined, maxWidth: 'min(520px, 92vw)' }}
       >
-        <div className="flex min-w-0 flex-col">
+        <div className="flex min-w-0 flex-col gap-1">
           {place && (
             <p
               className="break-words text-[20px] leading-[1.5] tracking-[-0.6px] text-[#2f2f2f]"
