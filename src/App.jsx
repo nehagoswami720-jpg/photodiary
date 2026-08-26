@@ -204,10 +204,12 @@ export default function App() {
       await delay(1800);
       if (!live()) return;
       if (card.place) {
-        saveCurrent({ place: card.place, capturedAt: data.capturedAt, showTime: true, source: 'exif' });
-        setScreen('card');
+        // place detected → save and drop straight into the updated gallery
+        await saveCurrent({ place: card.place, capturedAt: data.capturedAt, showTime: true, source: 'exif' });
+        if (!live()) return;
+        goHome();
       } else {
-        setScreen('manual');
+        setScreen('manual'); // no place → offer manual entry first
       }
     } catch {
       if (!live()) return;
@@ -217,9 +219,10 @@ export default function App() {
     }
   }
 
-  // Build the card from manually-entered fields (all optional; only what was
-  // entered is shown). Date & time come from native pickers, so no guesswork.
-  function submitManual({ place, date, time }) {
+  // Build the moment from manually-entered fields (all optional; only what was
+  // entered is shown). Date & time come from custom pickers, so no guesswork.
+  // Save, then drop into the updated gallery.
+  async function submitManual({ place, date, time }) {
     let capturedAt = null;
     let showTime = false;
     if (date) {
@@ -232,20 +235,19 @@ export default function App() {
         capturedAt = new Date(y, m - 1, d);
       }
     }
-    setResult((prev) => ({ place, capturedAt, showTime, imageUrl: prev?.imageUrl }));
-    saveCurrent({ place, capturedAt, showTime, source: 'manual' });
-    setScreen('card');
+    await saveCurrent({ place, capturedAt, showTime, source: 'manual' });
+    goHome();
   }
 
   // "Skip" on the manual invitation → keep the photo (and any EXIF date), no place.
-  function skipManual() {
-    saveCurrent({
+  async function skipManual() {
+    await saveCurrent({
       place: null,
       capturedAt: result?.capturedAt ?? null,
       showTime: result?.showTime ?? false,
       source: 'exif',
     });
-    setScreen('card');
+    goHome();
   }
 
   return (
@@ -259,23 +261,15 @@ export default function App() {
         {screen === 'loading' && <Loading percent={percent} status={status} />}
         {screen === 'success' && <Success />}
         {screen === 'error' && <ErrorState percent={failPercent} onRetry={goHome} />}
+        {/* the single hero card is now only used for the ?state=card preview
+            (and, later, a detail view when tapping a grid moment) */}
         {screen === 'card' && result && (
-          <div className="flex flex-col items-center gap-8">
-            <Card
-              place={result.place}
-              capturedAt={result.capturedAt}
-              imageUrl={result.imageUrl}
-              showTime={result.showTime}
-            />
-            <button
-              type="button"
-              onClick={goHome}
-              className="text-[14px] text-[#a0a0a0] transition-colors hover:text-[#333]"
-              style={{ fontFamily: HELVETICA }}
-            >
-              ← back to moments
-            </button>
-          </div>
+          <Card
+            place={result.place}
+            capturedAt={result.capturedAt}
+            imageUrl={result.imageUrl}
+            showTime={result.showTime}
+          />
         )}
         {screen === 'manual' && result && (
           <ManualIntro

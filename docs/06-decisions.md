@@ -351,3 +351,16 @@ values from Figma:
   grid cell; `getAllEntries()` added to `lib/db.js`.
 - **Deferred:** album grouping by time+location gaps, and a detail view when
   tapping a grid moment.
+
+### D26 — Gallery refinements (designer feedback)
+
+- **No card-reveal step:** after an upload, the app drops **straight into the
+  updated gallery** (no single-card reveal / "back to moments"). The hero
+  `Card` is now used only for the `?state=card` preview and a future
+  tap-to-open detail view.
+- **Spacing tokens (from the designer):** 36px between columns, 48px between
+  rows (`MomentCard` margin), 128px from the title to the grid.
+- **Button:** matches the Figma — a rectangular #111 button with a plus icon,
+  "Upload a moment" (was a rounded pill).
+- **Softer fade:** the bottom fade is a gentle `white → transparent` (was a
+  hard, mostly-opaque band).
