@@ -4,19 +4,37 @@ import EmptyState from './screens/EmptyState.jsx';
 import Loading from './screens/Loading.jsx';
 import Success from './screens/Success.jsx';
 import ErrorState from './screens/ErrorState.jsx';
+import Card from './screens/Card.jsx';
 import { readPhotoData } from './lib/exif.js';
 import { buildCard } from './lib/card.js';
 
-// Preview hook: open with ?state=error (or =success) to jump straight to a
+const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Preview hook: open with ?state=error|success|card to jump straight to a
 // screen for design review, since these states are otherwise hard to reach.
 const PREVIEW = (() => {
   try {
     const s = new URLSearchParams(window.location.search).get('state');
-    return s === 'error' || s === 'success' ? s : null;
+    return s === 'error' || s === 'success' || s === 'card' ? s : null;
   } catch {
     return null;
   }
 })();
+
+// Sample data so ?state=card renders a full card without a real GPS photo.
+const SAMPLE_IMG =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="520" height="340">' +
+      '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0" stop-color="#4a6b78"/><stop offset="1" stop-color="#16242b"/>' +
+      '</linearGradient></defs><rect width="520" height="340" fill="url(#g)"/></svg>',
+  );
+const SAMPLE_CARD = {
+  place: 'Chicago, Illinois',
+  capturedAt: new Date(2026, 6, 26, 16, 0),
+  imageUrl: SAMPLE_IMG,
+};
 
 // Genuinely check whether the file can be read as an image. Returns false for
 // non-images (PDFs, text, corrupt files); true for real photos. HEIC often
@@ -62,7 +80,7 @@ export default function App() {
   const [status, setStatus] = useState(PHRASES[0]);
   const [busy, setBusy] = useState(false);
   const [failPercent, setFailPercent] = useState(25);
-  const [, setCard] = useState(null); // held for the card screen (built next)
+  const [result, setResult] = useState(PREVIEW === 'card' ? SAMPLE_CARD : null); // { place, capturedAt, imageUrl }
   const runIdRef = useRef(0); // lets a newer upload cancel an in-flight one
 
   // Cycle the status phrases on a slow loop while busy (random, no repeats).
@@ -119,9 +137,13 @@ export default function App() {
       if (!live()) return;
       setPercent(100);
       setBusy(false); // stops the phrase loop
-      setCard(card);
+      setResult({ place: card.place, capturedAt: data.capturedAt, imageUrl: URL.createObjectURL(file) });
       setScreen('success');
-      // The card screen gets wired in from here next.
+
+      // Let the success beat breathe, then reveal the card.
+      await delay(1800);
+      if (!live()) return;
+      setScreen('card');
     } catch {
       if (!live()) return;
       setBusy(false);
@@ -134,17 +156,22 @@ export default function App() {
     runIdRef.current++; // cancel any in-flight run
     setBusy(false);
     setPercent(0);
+    if (result?.imageUrl) URL.revokeObjectURL(result.imageUrl);
+    setResult(null);
     setScreen('empty');
   }
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-white">
       <Wordmark />
-      <div className="flex w-full flex-1 items-center justify-center">
+      <div className="flex w-full flex-1 items-center justify-center py-10">
         {screen === 'empty' && <EmptyState onFile={handleFile} />}
         {screen === 'loading' && <Loading percent={percent} status={status} />}
         {screen === 'success' && <Success />}
         {screen === 'error' && <ErrorState percent={failPercent} onRetry={reset} />}
+        {screen === 'card' && result && (
+          <Card place={result.place} capturedAt={result.capturedAt} imageUrl={result.imageUrl} />
+        )}
       </div>
     </div>
   );

@@ -21,14 +21,16 @@ export async function buildCard(data, { homeCountry = null } = {}) {
   const hasCoords = typeof lat === 'number' && typeof lon === 'number';
   const zone = hasCoords ? zoneFromCoords(lat, lon) : null;
 
+  // Place is the detected city, or null. If it can't be detected we show
+  // nothing (never raw coordinates) — manual entry is the fallback (D19-era).
   let place = null;
   if (hasCoords) {
     const geo = await reverseGeocode(lat, lon);
-    place = formatPlace(geo, homeCountry) || coarseCoords(lat, lon);
+    place = formatPlace(geo, homeCountry);
   }
 
   return {
-    place, // "Chicago, Illinois" | coarse coords | null
+    place, // "Chicago, Illinois" | null
     weekday: when.weekday, // "Friday" | null
     date: when.date, // "26 December 2025" | null
     time: when.time, // "3:16 PM" | null
@@ -59,10 +61,6 @@ function formatWhen(d) {
     date: `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`,
     time: `${h}:${String(d.getMinutes()).padStart(2, '0')} ${ampm}`,
   };
-}
-
-function coarseCoords(lat, lon) {
-  return `${lat.toFixed(3)}, ${lon.toFixed(3)}`;
 }
 
 // Naive ISO (no timezone) capturing the wall-clock; paired with `offset`/`zone`
