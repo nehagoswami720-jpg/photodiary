@@ -243,3 +243,23 @@ values from Figma:
   `28.57px` / `36.56px`.
 - Error button offset below the bar: Figma `gap-64` × (620/684 bar ratio) →
   `58px`.
+
+### D20 — The hero card
+
+- **Context:** After success, show the single photo's card. Uses the Figma
+  "Card component" — which introduces two new fonts (**Mulish** for the place,
+  **Newsreader** for date/time) as a deliberate contrast to the app's DM
+  Serif / Helvetica.
+- **Tokens (per the updated component):** place Mulish Medium 20px #2f2f2f
+  −0.6px; date Newsreader Light Italic 16px #959595 −0.48px; time Newsreader
+  Light 16px #959595 −0.48px.
+- **Image:** shown at its natural aspect, never cropped, sized to reflect the
+  original and vary per photo, capped to `min(520px, 92vw)` wide × `62vh` tall.
+- **Place honesty:** the detected city, or the line is omitted entirely — never
+  raw coordinates. Missing date/time are likewise omitted (just the photo).
+  Verified on real photos: Chicago / NYC detect correctly; GPS-less shots show
+  photo-only.
+- **No text may cross the photo edges:** the caption row is constrained to the
+  image's measured rendered width (`ResizeObserver`), and the place name wraps
+  within it on tall/narrow photos rather than bleeding out.
+- **Transition:** success beat breathes ~1.8s, then the card fades/rises in.
