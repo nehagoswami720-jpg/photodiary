@@ -271,9 +271,11 @@ values from Figma:
 - **Trigger:** after the success beat, if `place` is null → show the invitation
   instead of the card (if place is detected → straight to the card).
 - **Choices:** photo shown uncropped but smaller than the hero card (fits the
-  composition); type scaled to match the app; the "Add the details" button
-  reuses the error button's treatment. Copy verbatim from the design ("This
-  moment came without its story." / "Some photos don't remember where or when
-  they were taken. You can add it, if you like.").
+  composition). **This screen uses the EXACT Figma tokens** (title Helvetica
+  Regular 32px #333 −1.6px/41; description Helvetica Light 20px #595959 −1px/26;
+  "Add the details" 24px on #111 px-24 py-16; "Skip" 20px underlined #1c1c1c;
+  48px gaps) — deliberately NOT scaled like the other screens, per the
+  designer's request, since it reads as its own composition. Copy verbatim from
+  the design.
 - **Wiring:** "Skip" → the photo-only card. "Add the details" → the entry form
   (screen 2), which is built next; currently a stub. Preview: `?state=manual`.
