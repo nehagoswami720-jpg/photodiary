@@ -308,3 +308,7 @@ values from Figma:
   selection, hidden scrollbars, selected row centered on open). Both fade+rise
   in (`.picker-pop`), flip upward when there's no room below, close on
   outside-click, and honor `prefers-reduced-motion`.
+- **Field styling (chosen by designer):** the place/date/time fields are
+  soft-filled rounded pills (light-grey, hover-highlight) with small line icons
+  (pin / calendar / clock) and a caret that rotates open — replacing the bare
+  underlines.

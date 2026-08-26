@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { CalendarIcon, Caret } from './icons.jsx';
 
 // A custom, elegant date field + calendar popover (replaces the native date
 // input so it matches the app's aesthetic). Value is "YYYY-MM-DD" — same shape
@@ -45,11 +46,13 @@ export default function DateField({ value, onChange }) {
       <button
         type="button"
         onClick={toggle}
-        className={`w-full border-b pb-1.5 text-left text-[15px] outline-none transition-colors ${
-          open ? 'border-[#767676]' : 'border-[#c4c4c4]'
+        className={`flex w-full items-center gap-2.5 rounded-[12px] px-4 py-2.5 text-left text-[15px] transition-colors ${
+          open ? 'bg-[#ececeb]' : 'bg-[#f3f3f2] hover:bg-[#ececeb]'
         }`}
       >
-        {display ? <span className="text-[#333]">{display}</span> : <span className="italic text-[#767676]">date</span>}
+        <span className="text-[#8a8a8a]"><CalendarIcon /></span>
+        <span className={display ? 'text-[#333]' : 'text-[#8a8a8a]'}>{display || 'Add a date'}</span>
+        <span className="ml-auto text-[#aaa]"><Caret open={open} /></span>
       </button>
 
       {open && (

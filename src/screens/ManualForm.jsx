@@ -1,16 +1,14 @@
 import { useState } from 'react';
 import DateField from '../components/DateField.jsx';
 import TimeField from '../components/TimeField.jsx';
+import { PinIcon } from '../components/icons.jsx';
 
 // Manual entry — screen 2: the form. The user adds the place / date / time the
 // photo didn't carry, then Submit builds the card. All fields optional — only
-// what's entered is shown (nothing invented). Date & time use native pickers so
-// the value is exactly what the user chose (no ambiguous text parsing).
-// Tokens from Figma 136:301, scaled to match the invitation screen.
+// what's entered is shown (nothing invented). Date & time use custom pickers so
+// the value is exactly what the user chose (no ambiguous text parsing). Fields
+// are soft-filled pills with line icons (place / date / time).
 const HELVETICA = '"Helvetica Neue", Helvetica, Arial, sans-serif';
-const fieldClass =
-  'w-full border-b border-[#c4c4c4] bg-transparent pb-1.5 text-[15px] tracking-[-0.3px] ' +
-  'text-[#333] outline-none placeholder:italic placeholder:text-[#767676] focus:border-[#767676]';
 
 export default function ManualForm({ imageUrl, onSubmit }) {
   const [place, setPlace] = useState('');
@@ -31,15 +29,18 @@ export default function ManualForm({ imageUrl, onSubmit }) {
         style={{ maxWidth: 'min(430px, 88vw)', maxHeight: '34vh' }}
       />
 
-      <div className="flex w-[min(430px,88vw)] flex-col gap-4" style={{ fontFamily: HELVETICA, fontWeight: 300 }}>
-        <input
-          type="text"
-          value={place}
-          onChange={(e) => setPlace(e.target.value)}
-          placeholder="add a place"
-          className={fieldClass}
-        />
-        <div className="flex justify-between gap-6">
+      <div className="flex w-[min(430px,88vw)] flex-col gap-3" style={{ fontFamily: HELVETICA, fontWeight: 400 }}>
+        <label className="flex items-center gap-2.5 rounded-[12px] bg-[#f3f3f2] px-4 py-2.5 text-[15px] transition-colors focus-within:bg-[#ececeb]">
+          <span className="text-[#8a8a8a]"><PinIcon /></span>
+          <input
+            type="text"
+            value={place}
+            onChange={(e) => setPlace(e.target.value)}
+            placeholder="Add a place"
+            className="w-full bg-transparent text-[#333] outline-none placeholder:text-[#8a8a8a]"
+          />
+        </label>
+        <div className="grid grid-cols-2 gap-3">
           <DateField value={date} onChange={setDate} />
           <TimeField value={time} onChange={setTime} />
         </div>
