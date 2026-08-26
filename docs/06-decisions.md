@@ -277,4 +277,21 @@ values from Figma:
   48px gaps) but the designer preferred the scaled version. Copy verbatim from
   the design.
 - **Wiring:** "Skip" → the photo-only card. "Add the details" → the entry form
-  (screen 2), which is built next; currently a stub. Preview: `?state=manual`.
+  (screen 2). Preview: `?state=manual`.
+
+### D22 — Manual entry, screen 2: the form
+
+- **Context:** The form (Figma 136:301) — photo + "add a place" / "date" /
+  "time" + Submit — lets the user supply what the photo didn't carry.
+- **Native date & time pickers (not free-text).** Parsing a typed date like
+  "07/08/2026" is ambiguous and could store the *wrong* date — an honesty
+  violation. Native `<input type="date/time">` guarantees the value is exactly
+  what the user picked. Trade-off: they don't match the design's italic
+  "date"/"time" placeholders pixel-for-pixel (format hint + small picker icon).
+  Place stays a text field with the italic "add a place" placeholder.
+- **All fields optional** — only what's entered is shown (nothing invented). A
+  date without a time shows the date and hides the time (`showTime` flag on the
+  Card). Submit with nothing → just the photo.
+- **Scaled** to match the invitation (Submit reuses the shared button treatment).
+  Preview: `?state=form`. Verified: Paris / 2026-08-26 / 14:30 →
+  "Paris, France · Wednesday, 26th August 2026 · 2.30 pm".

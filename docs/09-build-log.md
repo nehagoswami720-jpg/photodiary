@@ -51,7 +51,7 @@ beyond the static frames. See `06-decisions.md` D15–D19.
 
 - HEIC decode-for-display untested (metadata path works; treated as valid).
 - Persistent-storage strategy (Phase 3).
-- Manual-entry form (screen 2); then persistence (IndexedDB) and v2.
+- Persistence (IndexedDB), then v2. Manual-entry form done.
 
 ## Deferred to v2 — design-system pass
 

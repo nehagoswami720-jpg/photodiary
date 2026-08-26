@@ -29,7 +29,7 @@ function formatTime(d) {
   return `${h}.${String(d.getMinutes()).padStart(2, '0')} ${ampm}`;
 }
 
-export default function Card({ place, capturedAt, imageUrl }) {
+export default function Card({ place, capturedAt, imageUrl, showTime = true }) {
   const imgRef = useRef(null);
   const [width, setWidth] = useState(null); // the image's rendered width
 
@@ -76,7 +76,7 @@ export default function Card({ place, capturedAt, imageUrl }) {
             </p>
           )}
         </div>
-        {capturedAt && (
+        {capturedAt && showTime && (
           <p
             className="shrink-0 whitespace-nowrap text-[16px] leading-[1.5] tracking-[-0.48px] text-[#959595]"
             style={{ fontFamily: '"Newsreader", serif', fontWeight: 300 }}

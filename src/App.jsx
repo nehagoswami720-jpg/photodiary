@@ -6,6 +6,7 @@ import Success from './screens/Success.jsx';
 import ErrorState from './screens/ErrorState.jsx';
 import Card from './screens/Card.jsx';
 import ManualIntro from './screens/ManualIntro.jsx';
+import ManualForm from './screens/ManualForm.jsx';
 import { readPhotoData } from './lib/exif.js';
 import { buildCard } from './lib/card.js';
 
@@ -16,7 +17,7 @@ const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 const PREVIEW = (() => {
   try {
     const s = new URLSearchParams(window.location.search).get('state');
-    return ['error', 'success', 'card', 'manual'].includes(s) ? s : null;
+    return ['error', 'success', 'card', 'manual', 'form'].includes(s) ? s : null;
   } catch {
     return null;
   }
@@ -83,9 +84,9 @@ export default function App() {
   const [failPercent, setFailPercent] = useState(25);
   const [result, setResult] = useState(() => {
     if (PREVIEW === 'card') return SAMPLE_CARD;
-    if (PREVIEW === 'manual') return { place: null, capturedAt: null, imageUrl: SAMPLE_IMG };
+    if (PREVIEW === 'manual' || PREVIEW === 'form') return { place: null, capturedAt: null, imageUrl: SAMPLE_IMG };
     return null;
-  }); // { place, capturedAt, imageUrl }
+  }); // { place, capturedAt, imageUrl, showTime }
   const runIdRef = useRef(0); // lets a newer upload cancel an in-flight one
 
   // Cycle the status phrases on a slow loop while busy (random, no repeats).
@@ -142,7 +143,7 @@ export default function App() {
       if (!live()) return;
       setPercent(100);
       setBusy(false); // stops the phrase loop
-      setResult({ place: card.place, capturedAt: data.capturedAt, imageUrl: URL.createObjectURL(file) });
+      setResult({ place: card.place, capturedAt: data.capturedAt, imageUrl: URL.createObjectURL(file), showTime: true });
       setScreen('success');
 
       // Let the success beat breathe, then reveal the card — or, when the place
@@ -156,6 +157,25 @@ export default function App() {
       setFailPercent(at); // the % the bar actually reached at detection
       setScreen('error');
     }
+  }
+
+  // Build the card from manually-entered fields (all optional; only what was
+  // entered is shown). Date & time come from native pickers, so no guesswork.
+  function submitManual({ place, date, time }) {
+    let capturedAt = null;
+    let showTime = false;
+    if (date) {
+      const [y, m, d] = date.split('-').map(Number);
+      if (time) {
+        const [hh, mm] = time.split(':').map(Number);
+        capturedAt = new Date(y, m - 1, d, hh, mm);
+        showTime = true;
+      } else {
+        capturedAt = new Date(y, m - 1, d);
+      }
+    }
+    setResult((prev) => ({ place, capturedAt, showTime, imageUrl: prev?.imageUrl }));
+    setScreen('card');
   }
 
   function reset() {
@@ -176,14 +196,22 @@ export default function App() {
         {screen === 'success' && <Success />}
         {screen === 'error' && <ErrorState percent={failPercent} onRetry={reset} />}
         {screen === 'card' && result && (
-          <Card place={result.place} capturedAt={result.capturedAt} imageUrl={result.imageUrl} />
+          <Card
+            place={result.place}
+            capturedAt={result.capturedAt}
+            imageUrl={result.imageUrl}
+            showTime={result.showTime}
+          />
         )}
         {screen === 'manual' && result && (
           <ManualIntro
             imageUrl={result.imageUrl}
-            onAddDetails={() => {}} // → the entry form (screen 2), built next
+            onAddDetails={() => setScreen('form')}
             onSkip={() => setScreen('card')}
           />
+        )}
+        {screen === 'form' && result && (
+          <ManualForm imageUrl={result.imageUrl} onSubmit={submitManual} />
         )}
       </div>
     </div>
