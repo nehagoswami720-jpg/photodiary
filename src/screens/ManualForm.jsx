@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import DateField from '../components/DateField.jsx';
+import TimeField from '../components/TimeField.jsx';
 
 // Manual entry — screen 2: the form. The user adds the place / date / time the
 // photo didn't carry, then Submit builds the card. All fields optional — only
@@ -38,20 +40,8 @@ export default function ManualForm({ imageUrl, onSubmit }) {
           className={fieldClass}
         />
         <div className="flex justify-between gap-6">
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            aria-label="date"
-            className={fieldClass}
-          />
-          <input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            aria-label="time"
-            className={fieldClass}
-          />
+          <DateField value={date} onChange={setDate} />
+          <TimeField value={time} onChange={setTime} />
         </div>
       </div>
 

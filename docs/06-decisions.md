@@ -295,3 +295,16 @@ values from Figma:
 - **Scaled** to match the invitation (Submit reuses the shared button treatment).
   Preview: `?state=form`. Verified: Paris / 2026-08-26 / 14:30 →
   "Paris, France · Wednesday, 26th August 2026 · 2.30 pm".
+
+### D23 — Custom date & time pickers (replace native)
+
+- **Context:** The native pickers were reliable but their browser chrome
+  (mm/dd/yyyy, calendar/clock icons) clashed with the minimal aesthetic and
+  can't be restyled.
+- **Choice:** Build self-contained custom pickers (`components/DateField.jsx`,
+  `TimeField.jsx`) — no library. Same value shape (`YYYY-MM-DD` / `HH:MM`), so
+  the honest data path is unchanged. Calendar popover (month nav, today marked,
+  black selected day); time popover with hour/minute/AM-PM columns (black-pill
+  selection, hidden scrollbars, selected row centered on open). Both fade+rise
+  in (`.picker-pop`), flip upward when there's no room below, close on
+  outside-click, and honor `prefers-reduced-motion`.

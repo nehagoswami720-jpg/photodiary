@@ -118,6 +118,19 @@
   .success-bar { animation: none; }
 }
 
+/* Date/time picker popovers rise and fade in gently. */
+.picker-pop {
+  transform-origin: top center;
+  animation: picker-pop 0.18s cubic-bezier(0.16, 0.84, 0.3, 1) both;
+}
+@keyframes picker-pop {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .picker-pop { animation: none; }
+}
+
 /* The hero card fades and rises gently into place. */
 .card-in {
   animation: card-in 0.6s cubic-bezier(0.16, 0.84, 0.3, 1) both;
