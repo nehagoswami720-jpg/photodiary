@@ -51,4 +51,20 @@ beyond the static frames. See `06-decisions.md` D15–D19.
 
 - HEIC decode-for-display untested (metadata path works; treated as valid).
 - Persistent-storage strategy (Phase 3).
-- Manual-entry screen; the card; then persistence (IndexedDB) and v2.
+- Manual-entry form (screen 2); then persistence (IndexedDB) and v2.
+
+## Deferred to v2 — design-system pass
+
+Each screen was scaled to feel right on its own, so the scale factors drift and
+there is no unified system yet:
+
+| Screen(s) | Scale vs Figma |
+|-----------|----------------|
+| Empty state | ~0.7× (designer-requested) |
+| Loading / success / error | ~0.9× |
+| Hero card | exact component tokens |
+| Manual-entry invitation | ~0.75× |
+
+**v2 task:** define one type scale + spacing scale + a shared button/token set,
+then reconcile every screen to it. Deliberately deferred — better done once all
+screens exist and can be seen together than reconciled mid-build.
