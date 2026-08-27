@@ -358,7 +358,7 @@ values from Figma:
   updated gallery** (no single-card reveal / "back to moments"). The hero
   `Card` is now used only for the `?state=card` preview and a future
   tap-to-open detail view.
-- **Spacing tokens (from the designer):** 48px between columns, 24px between
+- **Spacing tokens (from the designer):** 36px between columns, 24px between
   rows (`MomentCard` margin), 128px from the title to the grid.
 - **Button:** matches the Figma — a rectangular #111 button with a plus icon,
   "Upload a moment" (was a rounded pill).
