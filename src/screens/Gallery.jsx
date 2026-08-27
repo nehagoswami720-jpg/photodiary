@@ -16,7 +16,7 @@ export default function Gallery({ entries, onAddMoment }) {
   return (
     <div className="w-full">
       <div className="mx-auto max-w-[1000px] px-6 pb-44 pt-32">
-        <div className="columns-2 [column-gap:24px] md:columns-3">
+        <div className="columns-2 [column-gap:48px] md:columns-3">
           {entries.map((e, i) => (
             <MomentCard
               key={e.id}

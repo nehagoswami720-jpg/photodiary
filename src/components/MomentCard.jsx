@@ -6,7 +6,7 @@ import { formatDate, formatTime } from '../lib/format.js';
 // provisional — the design-system pass will reconcile them later.
 export default function MomentCard({ place, capturedAt, showTime, imageUrl }) {
   return (
-    <div className="mb-12 break-inside-avoid">
+    <div className="mb-6 break-inside-avoid">
       <img src={imageUrl} alt="" className="block h-auto w-full" />
       {(place || capturedAt) && (
         <div className="mt-3 flex items-start justify-between gap-3">
