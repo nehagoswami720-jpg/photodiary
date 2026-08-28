@@ -364,3 +364,25 @@ values from Figma:
   "Upload a moment" (was a rounded pill).
 - **Softer fade:** the bottom fade is a gentle `white → transparent` (was a
   hard, mostly-opaque band).
+
+### D27 — Auto-grouping into albums (v2 centrepiece)
+
+- **Context:** The roadmap's "diary of albums" — the gallery groups moments
+  into albums by gaps in time + location. Pure arithmetic on stored
+  `{ capturedAt, lat, lon }`; no new deps, no AI. Honest: only recorded values
+  are used; undated moments are never guessed into a group.
+- **Presentation:** sectioned scroll (agreed) — one page, an `AlbumHeader`
+  (place in DM Serif + date range in Newsreader italic) above each album's own
+  masonry grid. No second screen / tap-to-open yet.
+- **Algorithm (`lib/albums.js`, pure `groupIntoAlbums`):** sort timed moments
+  chronologically; new album when **gap ≥ 24h** OR **haversine distance ≥ 50km**.
+  Album place = most common non-null place; date label via `formatDateRange`
+  (same day / "8th–9th November 2025" / cross-month / cross-year). Albums
+  newest-first; undated moments collect in a final "Undated" section.
+- **Threshold note:** started at 12h, but testing showed an overnight stay in
+  one city split into two same-named albums; **raised to 24h** so a
+  day-or-overnight in a place stays one album while genuine multi-day/other-city
+  breaks still split. Tunable constants at the top of `albums.js`.
+- Verified headlessly (grouping test) and in-browser: Chicago weekend = 1
+  album, NYC overnight = 1 album with an "8th–9th" range, Lisbon separate,
+  undated last.
