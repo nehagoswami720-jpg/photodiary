@@ -10,6 +10,7 @@ import ManualForm from './screens/ManualForm.jsx';
 import Gallery from './screens/Gallery.jsx';
 import { readPhotoData } from './lib/exif.js';
 import { buildCard } from './lib/card.js';
+import { toDisplayBlob } from './lib/heic.js';
 import { saveEntry, getAllEntries, requestPersistence } from './lib/db.js';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -182,21 +183,26 @@ export default function App() {
       if (!(await validPromise)) throw new Error('unreadable');
       if (!live()) return;
 
+      // EXIF is read from the original (works for HEIC too).
       const data = await readPhotoData(file);
       if (!live()) return;
-      pendingRef.current = { file, lat: data.lat, lon: data.lon };
+
+      // Convert HEIC -> displayable JPEG on-device (no-op for other formats),
+      // in parallel with the geocode wait. This blob is what we show AND store.
+      const displayPromise = toDisplayBlob(file);
 
       // The geocode is the one genuine wait — ease toward 90 while it runs.
       const cardPromise = buildCard(data, { homeCountry: HOME_COUNTRY });
       await tween(readTarget, 90, 1300, setPct);
-      const card = await cardPromise;
+      const [card, displayBlob] = await Promise.all([cardPromise, displayPromise]);
       if (!live()) return;
+      pendingRef.current = { file: displayBlob, lat: data.lat, lon: data.lon };
 
       await tween(90, 100, 400, setPct);
       if (!live()) return;
       setPercent(100);
       setBusy(false); // stops the phrase loop
-      setResult({ place: card.place, capturedAt: data.capturedAt, imageUrl: URL.createObjectURL(file), showTime: true });
+      setResult({ place: card.place, capturedAt: data.capturedAt, imageUrl: URL.createObjectURL(displayBlob), showTime: true });
       setScreen('success');
 
       // Let the success beat breathe, then reveal the card — or, when the place

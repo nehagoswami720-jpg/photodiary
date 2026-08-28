@@ -383,3 +383,19 @@ values from Figma:
   location"** section.
 - Verified in-browser: separate NYC / Chicago / Lisbon albums (each place once),
   "No location" last, per-moment date+time intact.
+
+### D28 — HEIC display (convert on upload)
+
+- **Context:** The long-standing open risk. A real iPhone `.heic` uploaded with
+  its card populated correctly (EXIF metadata reads fine) but the **image was
+  blank** — browsers can't decode HEIC pixels.
+- **Fix:** `lib/heic.js` `toDisplayBlob()` converts HEIC/HEIF → JPEG on-device
+  via **heic2any** (dynamically imported, so the heavy WASM only loads when a
+  HEIC actually appears; non-HEIC passes straight through). The upload flow
+  reads EXIF from the original, then converts **in parallel with the geocode**;
+  the resulting JPEG is what we **display and store**. On conversion failure we
+  fall back to the original (card still shows; thumbnail may be blank).
+- **Privacy intact:** conversion is entirely local — photos still never leave
+  the device.
+- Verified with the user's real `IMG_6939.HEIC`: the photo now renders in its
+  San Francisco album with the correct caption.

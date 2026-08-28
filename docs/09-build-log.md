@@ -56,7 +56,7 @@ is fully met.
 
 ## Still open (minor / v2)
 
-- HEIC decode-for-display untested (metadata path works; treated as valid).
+- HEIC display: SOLVED (convert to JPEG on-device via heic2any, D28).
 - Persistent-storage grant depends on browser engagement (requested; best-effort).
 - v2: the albums/gallery view, and the design-system pass (below).
 
