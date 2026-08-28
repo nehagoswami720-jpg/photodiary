@@ -8,6 +8,7 @@ import Card from './screens/Card.jsx';
 import ManualIntro from './screens/ManualIntro.jsx';
 import ManualForm from './screens/ManualForm.jsx';
 import Gallery from './screens/Gallery.jsx';
+import Gallery3D from './screens/Gallery3D.jsx';
 import { readPhotoData } from './lib/exif.js';
 import { buildCard } from './lib/card.js';
 import { toDisplayBlob } from './lib/heic.js';
@@ -256,14 +257,16 @@ export default function App() {
     goHome();
   }
 
+  // The 3D gallery takes over the full screen (dark scene, its own wordmark).
+  if (screen === 'gallery') {
+    return <Gallery3D entries={entries} onAddMoment={handleFile} />;
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center bg-white">
       <Wordmark />
-      {screen === 'gallery' ? (
-        <Gallery entries={entries} onAddMoment={handleFile} />
-      ) : (
-        <div className="flex w-full flex-1 items-center justify-center py-10">
-          {screen === 'empty' && <EmptyState onFile={handleFile} />}
+      <div className="flex w-full flex-1 items-center justify-center py-10">
+        {screen === 'empty' && <EmptyState onFile={handleFile} />}
         {screen === 'loading' && <Loading percent={percent} status={status} />}
         {screen === 'success' && <Success />}
         {screen === 'error' && <ErrorState percent={failPercent} onRetry={goHome} />}
@@ -287,8 +290,7 @@ export default function App() {
         {screen === 'form' && result && (
           <ManualForm imageUrl={result.imageUrl} onSubmit={submitManual} />
         )}
-        </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -10,10 +10,13 @@
     "verify": "node src/lib/verify.js"
   },
   "dependencies": {
+    "@react-three/drei": "^10.7.8",
+    "@react-three/fiber": "^9.7.0",
     "exifr": "^7.1.3",
     "heic2any": "^0.0.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "three": "^0.185.1",
     "tz-lookup": "^6.1.25"
   },
   "devDependencies": {
