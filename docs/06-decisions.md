@@ -399,3 +399,31 @@ values from Figma:
   the device.
 - Verified with the user's real `IMG_6939.HEIC`: the photo now renders in its
   San Francisco album with the correct caption.
+
+---
+
+## UI Redesign (branch: `ui-redesign`) — the 3D museum
+
+### D29 — The 3D gallery (WebGL, first iteration)
+
+- **Context:** Evolving Moments from a 2D grid into a "3D museum of memories."
+  Scope agreed: only the gallery becomes 3D ("floating cards in deep space");
+  upload / albums / manual entry / HEIC / persistence stay untouched. Work on
+  the `ui-redesign` branch; `main` stays the known-good app.
+- **Stack:** React Three Fiber + three + drei (the reference's WebGL stack).
+  New `screens/Gallery3D.jsx` + `components/MomentPlane.jsx`; `App` swaps
+  `Gallery` → `Gallery3D` for the gallery screen only (same props). The
+  `src/lib/` engine is untouched — the 3D is pure presentation over the same
+  `entries`. Trade-off, eyes-open: this is the most complex code in the project.
+- **Design (per designer, iterated live):** white field (no space background /
+  no star field), no album-grouping labels — pure floating photos. Moments
+  scattered continuously through depth (newest nearest), fov 70, per-card tilt
+  that straightens on hover for dimensionality; wheel/trackpad dollies the
+  camera through depth; hover lifts, click focuses + shows the honest caption.
+  Soft **white fades on all four edges** so photos dissolve at the boundaries
+  and never overlap the MOMENTS title or spill off.
+- **Testing note (important):** WebGL renders correctly in a real browser, but
+  the automated CDP-controlled Chrome used for dev **cannot reliably screenshot
+  the WebGL layer**, and hot-reloading a file containing `<Canvas>` leaks/loses
+  the GPU context. Verify 3D changes via a **preview Vercel deploy** in a real
+  browser, not the in-tool screenshots. Confirmed working by the designer.
