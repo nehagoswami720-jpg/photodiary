@@ -36,7 +36,8 @@ export default function Gallery3D({ entries, onAddMoment }) {
   const { cards, depth } = useMemo(() => {
     const cards = entries.map((e, i) => ({
       id: e.id,
-      position: [rand(e.id, 1) * 5.5, rand(e.id, 2) * 3.3, -i * SPACING + rand(e.id, 3) * 2],
+      // tighter, slightly-lowered cloud so it stays clear of the MOMENTS title
+      position: [rand(e.id, 1) * 4.8, rand(e.id, 2) * 2.5 - 0.4, -i * SPACING + rand(e.id, 3) * 2],
     }));
     return { cards, depth: Math.max(1, entries.length - 1) * SPACING };
   }, [entries]);
@@ -76,8 +77,17 @@ export default function Gallery3D({ entries, onAddMoment }) {
         </Suspense>
       </Canvas>
 
+      {/* soft white boundaries on all four sides — photos dissolve at the edges
+          so nothing overlaps the title or spills off harshly */}
+      <div className="pointer-events-none fixed inset-0 z-10">
+        <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-white via-white/85 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-white to-transparent" />
+        <div className="absolute inset-y-0 left-0 w-28 bg-gradient-to-r from-white to-transparent" />
+        <div className="absolute inset-y-0 right-0 w-28 bg-gradient-to-l from-white to-transparent" />
+      </div>
+
       {/* 2D overlay — dark on the white field */}
-      <div className="pointer-events-none fixed inset-0 flex flex-col items-center">
+      <div className="pointer-events-none fixed inset-0 z-20 flex flex-col items-center">
         <Wordmark color="#1a1a1a" />
       </div>
 
