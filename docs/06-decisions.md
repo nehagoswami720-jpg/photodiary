@@ -368,21 +368,18 @@ values from Figma:
 ### D27 — Auto-grouping into albums (v2 centrepiece)
 
 - **Context:** The roadmap's "diary of albums" — the gallery groups moments
-  into albums by gaps in time + location. Pure arithmetic on stored
-  `{ capturedAt, lat, lon }`; no new deps, no AI. Honest: only recorded values
-  are used; undated moments are never guessed into a group.
+  into albums. Pure arithmetic on stored data; no new deps, no AI. Honest: only
+  the recorded place is used; nothing is invented.
 - **Presentation:** sectioned scroll (agreed) — one page, an `AlbumHeader`
-  (place in DM Serif + date range in Newsreader italic) above each album's own
-  masonry grid. No second screen / tap-to-open yet.
-- **Algorithm (`lib/albums.js`, pure `groupIntoAlbums`):** sort timed moments
-  chronologically; new album when **gap ≥ 24h** OR **haversine distance ≥ 50km**.
-  Album place = most common non-null place; date label via `formatDateRange`
-  (same day / "8th–9th November 2025" / cross-month / cross-year). Albums
-  newest-first; undated moments collect in a final "Undated" section.
-- **Threshold note:** started at 12h, but testing showed an overnight stay in
-  one city split into two same-named albums; **raised to 24h** so a
-  day-or-overnight in a place stays one album while genuine multi-day/other-city
-  breaks still split. Tunable constants at the top of `albums.js`.
-- Verified headlessly (grouping test) and in-browser: Chicago weekend = 1
-  album, NYC overnight = 1 album with an "8th–9th" range, Lisbon separate,
-  undated last.
+  above each album's own masonry grid. No second screen / tap-to-open yet.
+- **Grouped by LOCATION only (revised per designer):** initially grouped by
+  time + location gaps (24h OR 50km) with a date-range subtitle. The designer
+  asked to group by **place only** — one album per place, regardless of when —
+  and to drop the date subtitle (the album header is just the place; each
+  moment still carries its own date + time on its card).
+- **Algorithm (`lib/albums.js`, pure `groupIntoAlbums`):** bucket entries by
+  `place` string; each place → one album, moments newest-first; albums ordered
+  by most-recent moment. Moments with no place collect in a final **"No
+  location"** section.
+- Verified in-browser: separate NYC / Chicago / Lisbon albums (each place once),
+  "No location" last, per-moment date+time intact.

@@ -28,7 +28,7 @@ export default function Gallery({ entries, onAddMoment }) {
       <div className="mx-auto max-w-[1000px] px-6 pb-44 pt-32">
         {albums.map((album) => (
           <section key={album.id} className="mb-20">
-            <AlbumHeader place={album.place} dateLabel={album.dateLabel} />
+            <AlbumHeader place={album.place} title={album.title} />
             <div className="columns-2 [column-gap:36px] md:columns-3">
               {album.moments.map((m) => (
                 <MomentCard
