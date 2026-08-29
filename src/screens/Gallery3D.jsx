@@ -1,6 +1,6 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { easing } from 'maath';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
 import MomentPlane from '../components/MomentPlane.jsx';
 import Wordmark from '../components/Wordmark.jsx';
 import { PlusIcon } from '../components/icons.jsx';
@@ -23,7 +23,6 @@ function rand(str, salt) {
 
 export default function Gallery3D({ entries, onAddMoment }) {
   const [focusedId, setFocusedId] = useState(null);
-  const scrollRef = useRef(0); // 0..1 progress through the gallery depth
 
   const urlById = useMemo(() => {
     const m = new Map();
@@ -44,16 +43,10 @@ export default function Gallery3D({ entries, onAddMoment }) {
 
   const focused = focusedId ? entries.find((e) => e.id === focusedId) : null;
 
-  function onWheel(e) {
-    const next = scrollRef.current + e.deltaY * 0.0008;
-    scrollRef.current = Math.max(0, Math.min(1, next));
-  }
-
   return (
     <div
       className="fixed inset-0"
       style={{ background: BG, width: '100vw', height: '100vh' }}
-      onWheel={onWheel}
     >
       <Canvas
         camera={{ position: [0, 0, 8], fov: 70 }}
@@ -61,8 +54,22 @@ export default function Gallery3D({ entries, onAddMoment }) {
         style={{ width: '100%', height: '100%', display: 'block' }}
       >
         <color attach="background" args={[BG]} />
-        <fog attach="fog" args={[BG, 16, 62]} />
-        <CameraRig scrollRef={scrollRef} depth={depth} />
+        <fog attach="fog" args={[BG, 20, 70]} />
+        {/* drag = orbit from any direction · right-drag / two-finger = pan ·
+            scroll = zoom in/out through the depth */}
+        <OrbitControls
+          makeDefault
+          enablePan
+          enableDamping
+          dampingFactor={0.08}
+          rotateSpeed={0.6}
+          panSpeed={0.7}
+          zoomSpeed={0.8}
+          minDistance={3}
+          maxDistance={48}
+          screenSpacePanning
+          target={[0, -0.4, -depth * 0.35]}
+        />
         <Suspense fallback={null}>
           {cards.map((c) => (
             <MomentPlane
@@ -118,13 +125,4 @@ export default function Gallery3D({ entries, onAddMoment }) {
       </div>
     </div>
   );
-}
-
-// Eases the camera through the depth toward the current scroll target.
-function CameraRig({ scrollRef, depth }) {
-  useFrame((state, dt) => {
-    const targetZ = 8 - scrollRef.current * depth;
-    easing.damp(state.camera.position, 'z', targetZ, 0.3, dt);
-  });
-  return null;
 }
