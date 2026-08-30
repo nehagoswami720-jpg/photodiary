@@ -55,8 +55,8 @@ export default function Gallery3D({ entries, onAddMoment }) {
     });
     // soft pan range — how far you can drift before the field rubber-bands back
     const bound = {
-      x: Math.max(0.5, (cols * CELL) / 2 - 3),
-      y: Math.max(0.5, (rows * CELL) / 2 - 2.5),
+      x: Math.max(3, (cols * CELL) / 2 - 1.5),
+      y: Math.max(2.4, (rows * CELL) / 2 - 1.5),
     };
     return { cards, bound };
   }, [entries]);
@@ -144,8 +144,8 @@ export default function Gallery3D({ entries, onAddMoment }) {
 // Cursor position steers a gentle drift: the further the cursor from center,
 // the faster the field glides that way (so photos move opposite to the cursor).
 // A dead zone near center lets it rest; the pan rubber-bands within the field.
-const DRIFT_SPEED = 5.5; // world units/sec at full cursor deflection
-const DEAD_ZONE = 0.07;
+const DRIFT_SPEED = 14; // world units/sec at full cursor deflection
+const DEAD_ZONE = 0.05;
 function PanRig({ mouse, offset, bound }) {
   useFrame((state, dt) => {
     const m = mouse.current;
@@ -159,7 +159,7 @@ function PanRig({ mouse, offset, bound }) {
     const cy = Math.max(-bound.y, Math.min(bound.y, o.y));
     o.x += (cx - o.x) * 0.08;
     o.y += (cy - o.y) * 0.08;
-    easing.damp3(state.camera.position, [o.x, o.y, 8], 0.25, dt);
+    easing.damp3(state.camera.position, [o.x, o.y, 8], 0.18, dt);
     state.camera.lookAt(o.x, o.y, -6);
   });
   return null;
