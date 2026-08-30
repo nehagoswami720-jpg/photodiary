@@ -1,66 +1,83 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Image } from '@react-three/drei';
+import { useTexture } from '@react-three/drei';
 import { easing } from 'maath';
 import * as THREE from 'three';
 
-// One moment as a photo plane on the inside of the sphere, facing the center
-// (the camera). Natural aspect (never cropped), a subtle organic roll, hover
-// lift, and a click that eases it in front of the camera to "focus" (from
-// whatever angle you've rotated to). Double-sided as a safety net.
+// One moment as a gently CURVED, waved panel on the inside of the cylinder —
+// it bends to the wall (fluid, paper-like, not a stiff rectangle) and faces the
+// central axis. Natural aspect (never cropped), subtle roll, hover lift, and a
+// click that eases it in front of the camera to "focus".
 const _dir = new THREE.Vector3();
 const _target = new THREE.Vector3();
+const SEG_X = 26;
+const SEG_Y = 18;
+const CURVE_R = 6; // how tightly the panel curves (smaller = more bend)
+
+// build a plane that curves around the cylinder + a soft static wave (paper feel)
+function curvedGeometry(w, h) {
+  const g = new THREE.PlaneGeometry(w, h, SEG_X, SEG_Y);
+  const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i);
+    const y = p.getY(i);
+    const a = x / CURVE_R;
+    const nx = CURVE_R * Math.sin(a);
+    const nz = CURVE_R * Math.cos(a) - CURVE_R; // edges recede (conform to wall)
+    const wave = Math.sin(x * 1.7 + y * 1.2) * 0.05 + Math.sin(y * 2.3) * 0.03;
+    p.setXYZ(i, nx, y, nz + wave);
+  }
+  p.needsUpdate = true;
+  g.computeVertexNormals();
+  return g;
+}
 
 function rollOf(id) {
   let h = 2166136261;
   for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619);
-  return (((h >>> 0) % 1000) / 1000 - 0.5) * 0.22; // small ±roll
+  return (((h >>> 0) % 1000) / 1000 - 0.5) * 0.18;
 }
 
 export default function MomentPlane({ id, url, position, focused, onFocus }) {
   const ref = useRef();
-  const imgRef = useRef();
   const [hovered, setHovered] = useState(false);
-  const [aspect, setAspect] = useState(1); // real photo aspect, loaded below
   const roll = useRef(rollOf(id));
 
-  // read the photo's natural aspect so the plane matches it (no crop)
+  const tex = useTexture(url);
   useEffect(() => {
-    const img = new window.Image();
-    img.onload = () => img.naturalHeight && setAspect(img.naturalWidth / img.naturalHeight);
-    img.src = url;
-  }, [url]);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.needsUpdate = true;
+  }, [tex]);
 
-  // double-sided so it's visible from any angle
-  useEffect(() => {
-    if (imgRef.current?.material) imgRef.current.material.side = THREE.DoubleSide;
-  });
-
-  const baseH = 2.7;
+  const aspect = tex.image ? tex.image.width / tex.image.height : 1;
+  const baseH = 1.6; // smaller photos
   const baseW = baseH * aspect;
+
+  const geo = useMemo(() => curvedGeometry(baseW, baseH), [baseW]);
+  useEffect(() => () => geo.dispose(), [geo]);
 
   useFrame((state, dt) => {
     const g = ref.current;
     if (!g) return;
     if (focused) {
-      // ease to a point in front of the camera and face it
       state.camera.getWorldDirection(_dir);
-      _target.copy(state.camera.position).addScaledVector(_dir, 4.5);
+      _target.copy(state.camera.position).addScaledVector(_dir, 4);
       easing.damp3(g.position, _target.toArray(), 0.25, dt);
       g.lookAt(state.camera.position);
-      easing.damp3(g.scale, [1.5, 1.5, 1.5], 0.2, dt);
+      easing.damp3(g.scale, [2, 2, 2], 0.2, dt);
     } else {
       easing.damp3(g.position, position, 0.5, dt);
-      g.lookAt(0, position[1], 0); // face the cylinder axis at its own height (upright)
-      g.rotateZ(roll.current); // a touch of organic roll
-      easing.damp3(g.scale, hovered ? [1.12, 1.12, 1.12] : [1, 1, 1], 0.2, dt);
+      g.lookAt(0, position[1], 0); // face the cylinder axis (upright)
+      g.rotateZ(roll.current);
+      easing.damp3(g.scale, hovered ? [1.1, 1.1, 1.1] : [1, 1, 1], 0.2, dt);
     }
   });
 
   return (
-    <group
+    <mesh
       ref={ref}
       position={position}
+      geometry={geo}
       onPointerOver={(e) => {
         e.stopPropagation();
         setHovered(true);
@@ -75,7 +92,7 @@ export default function MomentPlane({ id, url, position, focused, onFocus }) {
         onFocus(focused ? null : id);
       }}
     >
-      <Image ref={imgRef} url={url} transparent scale={[baseW, baseH]} radius={0.03} />
-    </group>
+      <meshBasicMaterial map={tex} side={THREE.DoubleSide} transparent toneMapped={false} />
+    </mesh>
   );
 }

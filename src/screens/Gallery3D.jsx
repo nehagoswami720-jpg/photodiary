@@ -14,8 +14,8 @@ import { formatDate, formatTime } from '../lib/format.js';
 const HELVETICA = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const BG = '#ffffff';
 const RADIUS = 7; // cylinder radius
-const COL_STEP = 0.46; // angular gap between columns (~26°)
-const ROW_STEP = 3.0; // vertical gap between rows
+const PER_RING = 12; // photos per full 360° ring before stacking another row
+const ROW_STEP = 2.3; // vertical gap between rings
 
 // deterministic pseudo-random in [-1,1] from a string + salt
 function rand(str, salt) {
@@ -36,17 +36,18 @@ export default function Gallery3D({ entries, onAddMoment }) {
   }, [entries]);
   useEffect(() => () => urlById.forEach((u) => URL.revokeObjectURL(u)), [urlById]);
 
-  // pack photos in a grid on the cylinder wall (dense; wraps as photos grow)
+  // spread photos EVENLY around the full 360° (per ring), stacking rings when
+  // there are many — so rotating always brings photos in (no one-sided gap)
   const cards = useMemo(() => {
     const n = entries.length;
-    const cols = Math.min(n, 7);
-    const rows = Math.ceil(n / cols);
+    const rings = Math.max(1, Math.ceil(n / PER_RING));
     return entries.map((e, i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const ang = (col - (cols - 1) / 2) * COL_STEP + rand(e.id, 1) * 0.05;
-      const h = ((rows - 1) / 2 - row) * ROW_STEP + rand(e.id, 2) * 0.4;
-      const rr = RADIUS * (0.96 + Math.abs(rand(e.id, 4)) * 0.1);
+      const ring = Math.floor(i / PER_RING);
+      const idx = i % PER_RING;
+      const inRing = ring < rings - 1 ? PER_RING : n - PER_RING * (rings - 1);
+      const ang = (idx / Math.max(1, inRing)) * Math.PI * 2 + ring * 0.4 + rand(e.id, 1) * 0.03;
+      const h = (ring - (rings - 1) / 2) * ROW_STEP + rand(e.id, 2) * 0.3;
+      const rr = RADIUS * (0.97 + Math.abs(rand(e.id, 4)) * 0.08);
       return { id: e.id, position: [Math.sin(ang) * rr, h, -Math.cos(ang) * rr] };
     });
   }, [entries]);
