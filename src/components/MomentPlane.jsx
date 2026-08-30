@@ -12,7 +12,7 @@ const _dir = new THREE.Vector3();
 const _target = new THREE.Vector3();
 const SEG_X = 26;
 const SEG_Y = 18;
-const CURVE_R = 3.4; // how tightly the panel curves (smaller = more bend)
+const CURVE_R = 5; // how tightly the panel curves (smaller = more bend)
 
 // build a plane that curves around the cylinder + a soft static wave (paper feel)
 function curvedGeometry(w, h) {
@@ -35,7 +35,7 @@ function curvedGeometry(w, h) {
 function rollOf(id) {
   let h = 2166136261;
   for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619);
-  return (((h >>> 0) % 1000) / 1000 - 0.5) * 0.18;
+  return (((h >>> 0) % 1000) / 1000 - 0.5) * 0.05;
 }
 
 export default function MomentPlane({ id, url, position, focused, onFocus }) {

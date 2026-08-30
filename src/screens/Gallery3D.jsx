@@ -59,7 +59,7 @@ export default function Gallery3D({ entries, onAddMoment }) {
   function onMove(e) {
     if (last.current) {
       vel.current.yaw -= (e.clientX - last.current.x) * 0.00045;
-      vel.current.pitch += (e.clientY - last.current.y) * 0.0004;
+      vel.current.pitch -= (e.clientY - last.current.y) * 0.0004;
     }
     last.current = { x: e.clientX, y: e.clientY };
   }
