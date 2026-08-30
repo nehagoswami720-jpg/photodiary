@@ -1,28 +1,25 @@
-import { Suspense, useEffect, useMemo, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { easing } from 'maath';
 import MomentPlane from '../components/MomentPlane.jsx';
 import Wordmark from '../components/Wordmark.jsx';
 import { PlusIcon } from '../components/icons.jsx';
 import { formatDate, formatTime } from '../lib/format.js';
 
-// The 3D gallery — moments as photo cards floating in depth on a clean white
-// field. Scroll (wheel/trackpad) to drift through; hover to lift + straighten;
-// click to focus. Same data as the 2D gallery; "Upload a moment" runs the same
-// upload flow. (No album grouping labels here — pure floating photos.)
+// The 3D gallery — a flowing "river" of memories on a clean white field. Photos
+// are composed along a gently curving path that recedes into depth; scrolling
+// glides the camera along the path with smooth inertia (on rails, not a free
+// camera), each photo turned toward you and gently alive, with a subtle
+// mouse-parallax. Same data as the 2D gallery; "Upload a moment" runs the same
+// upload flow.
 const HELVETICA = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const BG = '#ffffff';
-const SPACING = 5.2; // z distance between successive photos (depth density)
-
-// deterministic pseudo-random in [-1,1] from a string + salt (stable per card)
-function rand(str, salt) {
-  let h = 2166136261 ^ salt;
-  for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
-  return (((h >>> 0) % 10000) / 10000) * 2 - 1;
-}
+const SPACING = 4.6; // depth between successive photos along the path
 
 export default function Gallery3D({ entries, onAddMoment }) {
   const [focusedId, setFocusedId] = useState(null);
+  const scrollTarget = useRef(0); // 0..1, where the user wants to be
+  const mouse = useRef({ x: 0, y: 0 }); // -1..1 for parallax
 
   const urlById = useMemo(() => {
     const m = new Map();
@@ -31,45 +28,43 @@ export default function Gallery3D({ entries, onAddMoment }) {
   }, [entries]);
   useEffect(() => () => urlById.forEach((u) => URL.revokeObjectURL(u)), [urlById]);
 
-  // scatter every moment through depth (newest nearest the camera)
+  // compose photos along a smooth curving path (sway + undulation), receding
   const { cards, depth } = useMemo(() => {
     const cards = entries.map((e, i) => ({
       id: e.id,
-      // tighter, slightly-lowered cloud so it stays clear of the MOMENTS title
-      position: [rand(e.id, 1) * 4.8, rand(e.id, 2) * 2.5 - 0.4, -i * SPACING + rand(e.id, 3) * 2],
+      position: [
+        Math.sin(i * 0.55) * 4.2, // gentle horizontal sway (the curve)
+        Math.cos(i * 0.42) * 1.4 - 0.2, // gentle vertical undulation
+        -i * SPACING,
+      ],
     }));
     return { cards, depth: Math.max(1, entries.length - 1) * SPACING };
   }, [entries]);
 
   const focused = focusedId ? entries.find((e) => e.id === focusedId) : null;
 
+  function onWheel(e) {
+    scrollTarget.current = Math.max(0, Math.min(1, scrollTarget.current + e.deltaY * 0.0006));
+  }
+  function onMove(e) {
+    mouse.current = { x: (e.clientX / window.innerWidth) * 2 - 1, y: -((e.clientY / window.innerHeight) * 2 - 1) };
+  }
+
   return (
     <div
       className="fixed inset-0"
       style={{ background: BG, width: '100vw', height: '100vh' }}
+      onWheel={onWheel}
+      onPointerMove={onMove}
     >
       <Canvas
-        camera={{ position: [0, 0, 8], fov: 70 }}
+        camera={{ position: [0, 0, 8], fov: 68 }}
         onPointerMissed={() => setFocusedId(null)}
         style={{ width: '100%', height: '100%', display: 'block' }}
       >
         <color attach="background" args={[BG]} />
-        <fog attach="fog" args={[BG, 20, 70]} />
-        {/* drag = orbit from any direction · right-drag / two-finger = pan ·
-            scroll = zoom in/out through the depth */}
-        <OrbitControls
-          makeDefault
-          enablePan
-          enableDamping
-          dampingFactor={0.08}
-          rotateSpeed={0.6}
-          panSpeed={0.7}
-          zoomSpeed={0.8}
-          minDistance={3}
-          maxDistance={48}
-          screenSpacePanning
-          target={[0, -0.4, -depth * 0.35]}
-        />
+        <fog attach="fog" args={[BG, 18, 66]} />
+        <CameraRig scrollTarget={scrollTarget} mouse={mouse} depth={depth} />
         <Suspense fallback={null}>
           {cards.map((c) => (
             <MomentPlane
@@ -84,8 +79,7 @@ export default function Gallery3D({ entries, onAddMoment }) {
         </Suspense>
       </Canvas>
 
-      {/* soft white boundaries on all four sides — photos dissolve at the edges
-          so nothing overlaps the title or spills off harshly */}
+      {/* soft white boundaries on all four sides */}
       <div className="pointer-events-none fixed inset-0 z-10">
         <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-white via-white/85 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-white to-transparent" />
@@ -93,7 +87,6 @@ export default function Gallery3D({ entries, onAddMoment }) {
         <div className="absolute inset-y-0 right-0 w-28 bg-gradient-to-l from-white to-transparent" />
       </div>
 
-      {/* 2D overlay — dark on the white field */}
       <div className="pointer-events-none fixed inset-0 z-20 flex flex-col items-center">
         <Wordmark color="#1a1a1a" />
       </div>
@@ -125,4 +118,19 @@ export default function Gallery3D({ entries, onAddMoment }) {
       </div>
     </div>
   );
+}
+
+// Glides the camera along the path with smooth inertia; a light mouse-parallax
+// adds depth. On rails — the camera is choreographed, never free-orbited.
+function CameraRig({ scrollTarget, mouse, depth }) {
+  const smooth = useRef(0); // eased scroll position (0..1)
+  useFrame((state, dt) => {
+    easing.damp(smooth, 'current', scrollTarget.current, 0.5, dt);
+    const z = 8 - smooth.current * depth;
+    const px = mouse.current.x * 1.3; // parallax sway
+    const py = mouse.current.y * 0.8;
+    easing.damp3(state.camera.position, [px, py, z], 0.35, dt);
+    state.camera.lookAt(px * 0.35, py * 0.35, z - 7);
+  });
+  return null;
 }
