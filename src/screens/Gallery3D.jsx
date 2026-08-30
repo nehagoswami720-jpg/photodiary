@@ -25,7 +25,7 @@ function rand(str, salt) {
 
 export default function Gallery3D({ entries, onAddMoment }) {
   const [focusedId, setFocusedId] = useState(null);
-  const velocity = useRef({ x: 0, y: 0 }); // momentum from gestures
+  const mouse = useRef({ x: 0, y: 0 }); // cursor position, -1..1 from center
   const offset = useRef({ x: 0, y: 0 }); // current camera pan
 
   const urlById = useMemo(() => {
@@ -63,17 +63,18 @@ export default function Gallery3D({ entries, onAddMoment }) {
 
   const focused = focusedId ? entries.find((e) => e.id === focusedId) : null;
 
-  // pan the camera WITH the gesture → photos appear to move the opposite way
-  function onWheel(e) {
-    velocity.current.x += e.deltaX * 0.0025;
-    velocity.current.y -= e.deltaY * 0.0025;
+  // one control: the cursor. Track its position; PanRig drifts the field so the
+  // photos glide OPPOSITE to where the cursor is.
+  function onMove(e) {
+    mouse.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.current.y = -((e.clientY / window.innerHeight) * 2 - 1);
   }
 
   return (
     <div
       className="fixed inset-0"
       style={{ background: BG, width: '100vw', height: '100vh' }}
-      onWheel={onWheel}
+      onPointerMove={onMove}
     >
       <Canvas
         camera={{ position: [0, 0, 8], fov: 55 }}
@@ -82,7 +83,7 @@ export default function Gallery3D({ entries, onAddMoment }) {
       >
         <color attach="background" args={[BG]} />
         <fog attach="fog" args={[BG, 12, 30]} />
-        <PanRig velocity={velocity} offset={offset} bound={bound} />
+        <PanRig mouse={mouse} offset={offset} bound={bound} />
         <Suspense fallback={null}>
           {cards.map((c) => (
             <MomentPlane
@@ -140,21 +141,25 @@ export default function Gallery3D({ entries, onAddMoment }) {
 
 // Applies gesture momentum to the camera pan, with decay + soft bounds, and
 // eases the camera there — so the photo field glides opposite to the gesture.
-function PanRig({ velocity, offset, bound }) {
+// Cursor position steers a gentle drift: the further the cursor from center,
+// the faster the field glides that way (so photos move opposite to the cursor).
+// A dead zone near center lets it rest; the pan rubber-bands within the field.
+const DRIFT_SPEED = 5.5; // world units/sec at full cursor deflection
+const DEAD_ZONE = 0.07;
+function PanRig({ mouse, offset, bound }) {
   useFrame((state, dt) => {
-    const v = velocity.current;
+    const m = mouse.current;
     const o = offset.current;
-    // gesture momentum always moves the field (so it always responds)...
-    o.x += v.x;
-    o.y += v.y;
-    v.x *= 0.88; // decay
-    v.y *= 0.88;
-    // ...then rubber-band back within the soft bounds (springs home past the edge)
+    const ax = Math.abs(m.x) > DEAD_ZONE ? m.x : 0;
+    const ay = Math.abs(m.y) > DEAD_ZONE ? m.y : 0;
+    o.x += ax * DRIFT_SPEED * dt;
+    o.y += ay * DRIFT_SPEED * dt;
+    // rubber-band within the soft bounds (eases home past the field edge)
     const cx = Math.max(-bound.x, Math.min(bound.x, o.x));
     const cy = Math.max(-bound.y, Math.min(bound.y, o.y));
-    o.x += (cx - o.x) * 0.1;
-    o.y += (cy - o.y) * 0.1;
-    easing.damp3(state.camera.position, [o.x, o.y, 8], 0.18, dt);
+    o.x += (cx - o.x) * 0.08;
+    o.y += (cy - o.y) * 0.08;
+    easing.damp3(state.camera.position, [o.x, o.y, 8], 0.25, dt);
     state.camera.lookAt(o.x, o.y, -6);
   });
   return null;
