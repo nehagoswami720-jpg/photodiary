@@ -67,11 +67,9 @@ export default function MomentPlane({ id, url, position, focused, onFocus }) {
       easing.damp3(g.scale, [2, 2, 2], 0.2, dt);
     } else {
       easing.damp3(g.position, position, 0.5, dt);
-      // face the sphere's center with NO roll (yaw + pitch only) so photos never
-      // twist awkwardly, wherever they sit on the sphere
-      const [px, py, pz] = position;
-      const d = Math.hypot(px, py, pz) || 1;
-      g.rotation.set(Math.asin(py / d), Math.atan2(-px, -pz), roll.current, 'YXZ');
+      // subtle tilt toward the center in BOTH axes (a gentle dome/curved-wall
+      // feel), plus a touch of roll — no big twisting
+      g.rotation.set(position[1] * 0.03, -position[0] * 0.03, roll.current, 'YXZ');
       easing.damp3(g.scale, hovered ? [1.1, 1.1, 1.1] : [1, 1, 1], 0.2, dt);
     }
   });

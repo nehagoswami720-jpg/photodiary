@@ -6,16 +6,17 @@ import Wordmark from '../components/Wordmark.jsx';
 import { PlusIcon } from '../components/icons.jsx';
 import { formatDate, formatTime } from '../lib/format.js';
 
-// The 3D gallery — a cylinder of memories (a lampshade). Photos sit on the
-// inside wall, upright, facing the central axis; the camera sits at the center
-// and rotates with cursor MOVEMENT (stops when the cursor stops). Horizontal
-// rotation wraps infinitely; a little vertical look is allowed. Edge curvature
-// is subtle and automatic. Same data as before; "Upload a moment" unchanged.
+// The 3D gallery — a dense field of memories on a gentle dome. Photos are packed
+// from the center outward (constant density, no big gaps), on a shallow curved
+// surface so they angle subtly at the edges in both axes. Move the cursor to
+// pan across the field (photos glide opposite); it stops when the cursor stops
+// and rubber-bands at the edges (bounded — no infinite void). "Upload a moment"
+// unchanged.
 const HELVETICA = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const BG = '#ffffff';
-const RADIUS = 7; // sphere radius
 const GOLDEN = Math.PI * (3 - Math.sqrt(5)); // golden angle for the spiral
-const SPREAD = 0.26; // angular spacing between photos (smaller = denser cluster)
+const SPREAD = 1.3; // spacing between photos (smaller = denser)
+const DOME = 0.02; // dome curvature (edges recede a little)
 
 // deterministic pseudo-random in [-1,1] from a string + salt
 function rand(str, salt) {
@@ -26,7 +27,8 @@ function rand(str, salt) {
 
 export default function Gallery3D({ entries, onAddMoment }) {
   const [focusedId, setFocusedId] = useState(null);
-  const vel = useRef({ yaw: 0, pitch: 0 }); // angular velocity from cursor movement
+  const vel = useRef({ x: 0, y: 0 }); // pan velocity from cursor movement
+  const offset = useRef({ x: 0, y: 0 }); // current camera pan
   const last = useRef(null); // last cursor position (px)
 
   const urlById = useMemo(() => {
@@ -36,30 +38,27 @@ export default function Gallery3D({ entries, onAddMoment }) {
   }, [entries]);
   useEffect(() => () => urlById.forEach((u) => URL.revokeObjectURL(u)), [urlById]);
 
-  // pack photos in a tight spiral cluster on the front of the sphere (constant
-  // density — dense even with few photos), growing outward as photos are added.
-  // Because they stay near the front they barely twist, yet you can still rotate
-  // any direction to explore the growing cluster.
-  const cards = useMemo(() => {
-    return entries.map((e, i) => {
-      const phi = SPREAD * Math.sqrt(i); // angular distance from the front pole (-z)
-      const a = i * GOLDEN; // azimuth around the spiral
-      const rr = RADIUS * (0.96 + Math.abs(rand(e.id, 4)) * 0.07);
-      const sp = Math.sin(phi);
-      return {
-        id: e.id,
-        position: [sp * Math.cos(a) * rr, sp * Math.sin(a) * rr, -Math.cos(phi) * rr],
-      };
+  // dense phyllotaxis spiral from the center out, curved onto a shallow dome
+  const { cards, bound } = useMemo(() => {
+    const cards = entries.map((e, i) => {
+      const r = SPREAD * Math.sqrt(i);
+      const a = i * GOLDEN;
+      const x = r * Math.cos(a) + rand(e.id, 1) * 0.25;
+      const y = r * Math.sin(a) + rand(e.id, 2) * 0.25;
+      const z = -DOME * (x * x + y * y); // dome: center near 0, edges recede
+      return { id: e.id, position: [x, y, z] };
     });
+    const maxR = SPREAD * Math.sqrt(entries.length) + 1;
+    return { cards, bound: { x: maxR, y: maxR } };
   }, [entries]);
 
   const focused = focusedId ? entries.find((e) => e.id === focusedId) : null;
 
-  // cursor MOVEMENT (delta) rotates the view → stops when the cursor stops.
+  // cursor MOVEMENT pans the field opposite; stops when the cursor stops.
   function onMove(e) {
     if (last.current) {
-      vel.current.yaw -= (e.clientX - last.current.x) * 0.00045;
-      vel.current.pitch -= (e.clientY - last.current.y) * 0.0004;
+      vel.current.x += (e.clientX - last.current.x) * 0.0022;
+      vel.current.y -= (e.clientY - last.current.y) * 0.0022;
     }
     last.current = { x: e.clientX, y: e.clientY };
   }
@@ -71,12 +70,13 @@ export default function Gallery3D({ entries, onAddMoment }) {
       onPointerMove={onMove}
     >
       <Canvas
-        camera={{ position: [0, 0, 0], fov: 52 }}
+        camera={{ position: [0, 0, 8], fov: 46 }}
         onPointerMissed={() => setFocusedId(null)}
         style={{ width: '100%', height: '100%', display: 'block' }}
       >
         <color attach="background" args={[BG]} />
-        <RotateRig vel={vel} />
+        <fog attach="fog" args={[BG, 14, 34]} />
+        <PanRig vel={vel} offset={offset} bound={bound} />
         <Suspense fallback={null}>
           {cards.map((c) => (
             <MomentPlane
@@ -132,21 +132,22 @@ export default function Gallery3D({ entries, onAddMoment }) {
   );
 }
 
-// Cursor movement adds angular velocity; it decays each frame, so the view
-// glides briefly and then STOPS when the cursor stops. Yaw wraps infinitely;
-// pitch is softly limited to the height of the photo band.
-const MAX_PITCH = 1.1; // ~63° up/down (reach the sphere's top & bottom)
-function RotateRig({ vel }) {
-  const rot = useRef({ yaw: 0, pitch: 0 });
+// Cursor movement pans the camera across the field; velocity decays (stops when
+// the cursor stops) and rubber-bands within the field bounds (stops at edges).
+function PanRig({ vel, offset, bound }) {
   useFrame((state, dt) => {
-    rot.current.yaw += vel.current.yaw;
-    rot.current.pitch += vel.current.pitch;
-    rot.current.pitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, rot.current.pitch));
-    vel.current.yaw *= 0.8; // decay → stops shortly after the cursor stops
-    vel.current.pitch *= 0.8;
-    state.camera.rotation.order = 'YXZ';
-    easing.damp(state.camera.rotation, 'y', rot.current.yaw, 0.1, dt);
-    easing.damp(state.camera.rotation, 'x', rot.current.pitch, 0.1, dt);
+    const v = vel.current;
+    const o = offset.current;
+    o.x += v.x;
+    o.y += v.y;
+    v.x *= 0.82;
+    v.y *= 0.82;
+    const cx = Math.max(-bound.x, Math.min(bound.x, o.x));
+    const cy = Math.max(-bound.y, Math.min(bound.y, o.y));
+    o.x += (cx - o.x) * 0.12;
+    o.y += (cy - o.y) * 0.12;
+    easing.damp3(state.camera.position, [o.x, o.y, 8], 0.15, dt);
+    state.camera.lookAt(o.x, o.y, -5);
   });
   return null;
 }
