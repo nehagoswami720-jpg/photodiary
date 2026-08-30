@@ -53,10 +53,10 @@ export default function Gallery3D({ entries, onAddMoment }) {
         ],
       };
     });
-    // how far the camera may pan before running out of photos (keeps you in the field)
+    // soft pan range — how far you can drift before the field rubber-bands back
     const bound = {
-      x: Math.max(0, (cols * CELL) / 2 - 4),
-      y: Math.max(0, (rows * CELL) / 2 - 3),
+      x: Math.max(0.5, (cols * CELL) / 2 - 3),
+      y: Math.max(0.5, (rows * CELL) / 2 - 2.5),
     };
     return { cards, bound };
   }, [entries]);
@@ -65,8 +65,8 @@ export default function Gallery3D({ entries, onAddMoment }) {
 
   // pan the camera WITH the gesture → photos appear to move the opposite way
   function onWheel(e) {
-    velocity.current.x += e.deltaX * 0.0016;
-    velocity.current.y -= e.deltaY * 0.0016;
+    velocity.current.x += e.deltaX * 0.0025;
+    velocity.current.y -= e.deltaY * 0.0025;
   }
 
   return (
@@ -144,11 +144,17 @@ function PanRig({ velocity, offset, bound }) {
   useFrame((state, dt) => {
     const v = velocity.current;
     const o = offset.current;
-    o.x = Math.max(-bound.x, Math.min(bound.x, o.x + v.x));
-    o.y = Math.max(-bound.y, Math.min(bound.y, o.y + v.y));
-    v.x *= 0.9; // momentum decay
-    v.y *= 0.9;
-    easing.damp3(state.camera.position, [o.x, o.y, 8], 0.2, dt);
+    // gesture momentum always moves the field (so it always responds)...
+    o.x += v.x;
+    o.y += v.y;
+    v.x *= 0.88; // decay
+    v.y *= 0.88;
+    // ...then rubber-band back within the soft bounds (springs home past the edge)
+    const cx = Math.max(-bound.x, Math.min(bound.x, o.x));
+    const cy = Math.max(-bound.y, Math.min(bound.y, o.y));
+    o.x += (cx - o.x) * 0.1;
+    o.y += (cy - o.y) * 0.1;
+    easing.damp3(state.camera.position, [o.x, o.y, 8], 0.18, dt);
     state.camera.lookAt(o.x, o.y, -6);
   });
   return null;
