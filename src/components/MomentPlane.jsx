@@ -12,7 +12,7 @@ const _dir = new THREE.Vector3();
 const _target = new THREE.Vector3();
 const SEG_X = 26;
 const SEG_Y = 18;
-const CURVE_R = 6; // how tightly the panel curves (smaller = more bend)
+const CURVE_R = 3.4; // how tightly the panel curves (smaller = more bend)
 
 // build a plane that curves around the cylinder + a soft static wave (paper feel)
 function curvedGeometry(w, h) {
@@ -67,8 +67,11 @@ export default function MomentPlane({ id, url, position, focused, onFocus }) {
       easing.damp3(g.scale, [2, 2, 2], 0.2, dt);
     } else {
       easing.damp3(g.position, position, 0.5, dt);
-      g.lookAt(0, position[1], 0); // face the cylinder axis (upright)
-      g.rotateZ(roll.current);
+      // face the sphere's center with NO roll (yaw + pitch only) so photos never
+      // twist awkwardly, wherever they sit on the sphere
+      const [px, py, pz] = position;
+      const d = Math.hypot(px, py, pz) || 1;
+      g.rotation.set(Math.asin(py / d), Math.atan2(-px, -pz), roll.current, 'YXZ');
       easing.damp3(g.scale, hovered ? [1.1, 1.1, 1.1] : [1, 1, 1], 0.2, dt);
     }
   });

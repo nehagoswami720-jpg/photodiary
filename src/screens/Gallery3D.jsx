@@ -13,9 +13,8 @@ import { formatDate, formatTime } from '../lib/format.js';
 // is subtle and automatic. Same data as before; "Upload a moment" unchanged.
 const HELVETICA = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const BG = '#ffffff';
-const RADIUS = 7; // cylinder radius
-const PER_RING = 12; // photos per full 360° ring before stacking another row
-const ROW_STEP = 2.3; // vertical gap between rings
+const RADIUS = 7; // sphere radius
+const GOLDEN = Math.PI * (3 - Math.sqrt(5)); // even Fibonacci distribution
 
 // deterministic pseudo-random in [-1,1] from a string + salt
 function rand(str, salt) {
@@ -36,19 +35,16 @@ export default function Gallery3D({ entries, onAddMoment }) {
   }, [entries]);
   useEffect(() => () => urlById.forEach((u) => URL.revokeObjectURL(u)), [urlById]);
 
-  // spread photos EVENLY around the full 360° (per ring), stacking rings when
-  // there are many — so rotating always brings photos in (no one-sided gap)
+  // spread photos evenly over the whole sphere (every direction) so rotating
+  // any way — up, down, sideways, diagonal — keeps bringing photos in
   const cards = useMemo(() => {
     const n = entries.length;
-    const rings = Math.max(1, Math.ceil(n / PER_RING));
     return entries.map((e, i) => {
-      const ring = Math.floor(i / PER_RING);
-      const idx = i % PER_RING;
-      const inRing = ring < rings - 1 ? PER_RING : n - PER_RING * (rings - 1);
-      const ang = (idx / Math.max(1, inRing)) * Math.PI * 2 + ring * 0.4 + rand(e.id, 1) * 0.03;
-      const h = (ring - (rings - 1) / 2) * ROW_STEP + rand(e.id, 2) * 0.3;
-      const rr = RADIUS * (0.97 + Math.abs(rand(e.id, 4)) * 0.08);
-      return { id: e.id, position: [Math.sin(ang) * rr, h, -Math.cos(ang) * rr] };
+      const y = (n > 1 ? 1 - (i / (n - 1)) * 2 : 0) * 0.92; // -0.92..0.92
+      const r = Math.sqrt(Math.max(0, 1 - y * y));
+      const theta = i * GOLDEN;
+      const rr = RADIUS * (0.95 + Math.abs(rand(e.id, 4)) * 0.12);
+      return { id: e.id, position: [Math.cos(theta) * r * rr, y * rr, Math.sin(theta) * r * rr] };
     });
   }, [entries]);
 
@@ -134,7 +130,7 @@ export default function Gallery3D({ entries, onAddMoment }) {
 // Cursor movement adds angular velocity; it decays each frame, so the view
 // glides briefly and then STOPS when the cursor stops. Yaw wraps infinitely;
 // pitch is softly limited to the height of the photo band.
-const MAX_PITCH = 0.55; // ~31°
+const MAX_PITCH = 1.1; // ~63° up/down (reach the sphere's top & bottom)
 function RotateRig({ vel }) {
   const rot = useRef({ yaw: 0, pitch: 0 });
   useFrame((state, dt) => {
