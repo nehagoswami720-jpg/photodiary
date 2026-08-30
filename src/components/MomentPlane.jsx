@@ -4,18 +4,17 @@ import { Image } from '@react-three/drei';
 import { easing } from 'maath';
 import * as THREE from 'three';
 
-// One moment as a photo plane floating in 3D space. Natural aspect (never
-// cropped), a gentle idle drift, a subtle tilt that straightens on hover, and
-// a click that eases it in front of the camera (from whatever angle you've
-// orbited to) to "focus". Double-sided so the cloud reads from any direction.
+// One moment as a photo plane on the inside of the sphere, facing the center
+// (the camera). Natural aspect (never cropped), a subtle organic roll, hover
+// lift, and a click that eases it in front of the camera to "focus" (from
+// whatever angle you've rotated to). Double-sided as a safety net.
 const _dir = new THREE.Vector3();
 const _target = new THREE.Vector3();
 
-// small deterministic tilt per card so photos feel placed in space
-function tilt(id, salt) {
-  let h = 2166136261 ^ salt;
+function rollOf(id) {
+  let h = 2166136261;
   for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619);
-  return (((h >>> 0) % 1000) / 1000 - 0.5) * 0.5; // ~±0.25 rad
+  return (((h >>> 0) % 1000) / 1000 - 0.5) * 0.22; // small ±roll
 }
 
 export default function MomentPlane({ id, url, position, focused, onFocus }) {
@@ -23,14 +22,7 @@ export default function MomentPlane({ id, url, position, focused, onFocus }) {
   const imgRef = useRef();
   const [hovered, setHovered] = useState(false);
   const [aspect, setAspect] = useState(1); // real photo aspect, loaded below
-  const phase = useRef(Math.random() * Math.PI * 2); // each card drifts differently
-  // very subtle tilt toward the center (shallow-curved-wall feel) + a touch of
-  // organic variation, so photos sit in space without distracting
-  const baseRot = useRef([
-    position[1] * 0.022 + tilt(id, 7) * 0.22,
-    -position[0] * 0.03 + tilt(id, 11) * 0.22,
-    tilt(id, 13) * 0.12,
-  ]);
+  const roll = useRef(rollOf(id));
 
   // read the photo's natural aspect so the plane matches it (no crop)
   useEffect(() => {
@@ -39,7 +31,7 @@ export default function MomentPlane({ id, url, position, focused, onFocus }) {
     img.src = url;
   }, [url]);
 
-  // double-sided so the photo is visible from any orbit angle
+  // double-sided so it's visible from any angle
   useEffect(() => {
     if (imgRef.current?.material) imgRef.current.material.side = THREE.DoubleSide;
   });
@@ -51,19 +43,17 @@ export default function MomentPlane({ id, url, position, focused, onFocus }) {
     const g = ref.current;
     if (!g) return;
     if (focused) {
-      // ease to a point in front of the camera and face it, wherever we've orbited
+      // ease to a point in front of the camera and face it
       state.camera.getWorldDirection(_dir);
-      _target.copy(state.camera.position).addScaledVector(_dir, 4.2);
+      _target.copy(state.camera.position).addScaledVector(_dir, 4.5);
       easing.damp3(g.position, _target.toArray(), 0.25, dt);
       g.lookAt(state.camera.position);
       easing.damp3(g.scale, [1.5, 1.5, 1.5], 0.2, dt);
     } else {
-      const t = state.clock.elapsedTime + phase.current;
-      const dx = Math.sin(t * 0.4) * 0.08;
-      const dy = Math.cos(t * 0.33) * 0.08;
-      easing.damp3(g.position, [position[0] + dx, position[1] + dy, position[2]], 0.5, dt);
-      easing.dampE(g.rotation, hovered ? [0, 0, 0] : baseRot.current, 0.3, dt);
-      easing.damp3(g.scale, hovered ? [1.18, 1.18, 1.18] : [1, 1, 1], 0.2, dt);
+      easing.damp3(g.position, position, 0.5, dt);
+      g.lookAt(0, 0, 0); // face the sphere's center (the camera)
+      g.rotateZ(roll.current); // a touch of organic roll
+      easing.damp3(g.scale, hovered ? [1.12, 1.12, 1.12] : [1, 1, 1], 0.2, dt);
     }
   });
 
@@ -71,7 +61,6 @@ export default function MomentPlane({ id, url, position, focused, onFocus }) {
     <group
       ref={ref}
       position={position}
-      rotation={baseRot.current}
       onPointerOver={(e) => {
         e.stopPropagation();
         setHovered(true);
