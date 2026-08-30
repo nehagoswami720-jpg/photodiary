@@ -24,9 +24,13 @@ export default function MomentPlane({ id, url, position, focused, onFocus }) {
   const [hovered, setHovered] = useState(false);
   const [aspect, setAspect] = useState(1); // real photo aspect, loaded below
   const phase = useRef(Math.random() * Math.PI * 2); // each card drifts differently
-  // subtle tilt + a yaw that turns the photo toward the central path, so it's
-  // seen front-on as you glide past it
-  const baseRot = useRef([tilt(id, 7) * 0.6, tilt(id, 11) * 0.6 - position[0] * 0.05, tilt(id, 13) * 0.2]);
+  // very subtle tilt toward the center (shallow-curved-wall feel) + a touch of
+  // organic variation, so photos sit in space without distracting
+  const baseRot = useRef([
+    position[1] * 0.022 + tilt(id, 7) * 0.22,
+    -position[0] * 0.03 + tilt(id, 11) * 0.22,
+    tilt(id, 13) * 0.12,
+  ]);
 
   // read the photo's natural aspect so the plane matches it (no crop)
   useEffect(() => {

@@ -6,20 +6,27 @@ import Wordmark from '../components/Wordmark.jsx';
 import { PlusIcon } from '../components/icons.jsx';
 import { formatDate, formatTime } from '../lib/format.js';
 
-// The 3D gallery — a flowing "river" of memories on a clean white field. Photos
-// are composed along a gently curving path that recedes into depth; scrolling
-// glides the camera along the path with smooth inertia (on rails, not a free
-// camera), each photo turned toward you and gently alive, with a subtle
-// mouse-parallax. Same data as the 2D gallery; "Upload a moment" runs the same
-// upload flow.
+// The 3D gallery — a distributed field of memories on a clean white field.
+// Photos are laid out on a jittered grid (well-spaced so none is ever fully
+// hidden — only corners overlap), at shallow depth. There is ONE control: the
+// gesture. Every scroll/trackpad movement pans the view so the photos glide the
+// OPPOSITE direction (up→down, left→right, diagonals too), with inertia. Same
+// data as the 2D gallery; "Upload a moment" runs the same upload flow.
 const HELVETICA = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const BG = '#ffffff';
-const SPACING = 4.6; // depth between successive photos along the path
+const CELL = 3.2; // grid cell size (world units) — spacing between photo centers
+
+// deterministic pseudo-random in [-1,1] from a string + salt (stable per card)
+function rand(str, salt) {
+  let h = 2166136261 ^ salt;
+  for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
+  return (((h >>> 0) % 10000) / 10000) * 2 - 1;
+}
 
 export default function Gallery3D({ entries, onAddMoment }) {
   const [focusedId, setFocusedId] = useState(null);
-  const scrollTarget = useRef(0); // 0..1, where the user wants to be
-  const mouse = useRef({ x: 0, y: 0 }); // -1..1 for parallax
+  const velocity = useRef({ x: 0, y: 0 }); // momentum from gestures
+  const offset = useRef({ x: 0, y: 0 }); // current camera pan
 
   const urlById = useMemo(() => {
     const m = new Map();
@@ -28,26 +35,38 @@ export default function Gallery3D({ entries, onAddMoment }) {
   }, [entries]);
   useEffect(() => () => urlById.forEach((u) => URL.revokeObjectURL(u)), [urlById]);
 
-  // compose photos along a smooth curving path (sway + undulation), receding
-  const { cards, depth } = useMemo(() => {
-    const cards = entries.map((e, i) => ({
-      id: e.id,
-      position: [
-        Math.sin(i * 0.55) * 4.2, // gentle horizontal sway (the curve)
-        Math.cos(i * 0.42) * 1.4 - 0.2, // gentle vertical undulation
-        -i * SPACING,
-      ],
-    }));
-    return { cards, depth: Math.max(1, entries.length - 1) * SPACING };
+  // lay photos on a jittered grid (aspect-ish), shallow depth. Grid keeps
+  // centers spaced (no full overlap); jitter + varied widths let corners touch.
+  const { cards, bound } = useMemo(() => {
+    const n = entries.length;
+    const cols = Math.max(1, Math.round(Math.sqrt(n * 1.7)));
+    const rows = Math.ceil(n / cols);
+    const cards = entries.map((e, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      return {
+        id: e.id,
+        position: [
+          (col - (cols - 1) / 2) * CELL + rand(e.id, 1) * CELL * 0.28,
+          ((rows - 1) / 2 - row) * CELL + rand(e.id, 2) * CELL * 0.28,
+          -0.4 - Math.abs(rand(e.id, 3)) * 2.6, // shallow depth
+        ],
+      };
+    });
+    // how far the camera may pan before running out of photos (keeps you in the field)
+    const bound = {
+      x: Math.max(0, (cols * CELL) / 2 - 4),
+      y: Math.max(0, (rows * CELL) / 2 - 3),
+    };
+    return { cards, bound };
   }, [entries]);
 
   const focused = focusedId ? entries.find((e) => e.id === focusedId) : null;
 
+  // pan the camera WITH the gesture → photos appear to move the opposite way
   function onWheel(e) {
-    scrollTarget.current = Math.max(0, Math.min(1, scrollTarget.current + e.deltaY * 0.0006));
-  }
-  function onMove(e) {
-    mouse.current = { x: (e.clientX / window.innerWidth) * 2 - 1, y: -((e.clientY / window.innerHeight) * 2 - 1) };
+    velocity.current.x += e.deltaX * 0.0016;
+    velocity.current.y -= e.deltaY * 0.0016;
   }
 
   return (
@@ -55,16 +74,15 @@ export default function Gallery3D({ entries, onAddMoment }) {
       className="fixed inset-0"
       style={{ background: BG, width: '100vw', height: '100vh' }}
       onWheel={onWheel}
-      onPointerMove={onMove}
     >
       <Canvas
-        camera={{ position: [0, 0, 8], fov: 68 }}
+        camera={{ position: [0, 0, 8], fov: 55 }}
         onPointerMissed={() => setFocusedId(null)}
         style={{ width: '100%', height: '100%', display: 'block' }}
       >
         <color attach="background" args={[BG]} />
-        <fog attach="fog" args={[BG, 18, 66]} />
-        <CameraRig scrollTarget={scrollTarget} mouse={mouse} depth={depth} />
+        <fog attach="fog" args={[BG, 12, 30]} />
+        <PanRig velocity={velocity} offset={offset} bound={bound} />
         <Suspense fallback={null}>
           {cards.map((c) => (
             <MomentPlane
@@ -120,17 +138,18 @@ export default function Gallery3D({ entries, onAddMoment }) {
   );
 }
 
-// Glides the camera along the path with smooth inertia; a light mouse-parallax
-// adds depth. On rails — the camera is choreographed, never free-orbited.
-function CameraRig({ scrollTarget, mouse, depth }) {
-  const smooth = useRef(0); // eased scroll position (0..1)
+// Applies gesture momentum to the camera pan, with decay + soft bounds, and
+// eases the camera there — so the photo field glides opposite to the gesture.
+function PanRig({ velocity, offset, bound }) {
   useFrame((state, dt) => {
-    easing.damp(smooth, 'current', scrollTarget.current, 0.5, dt);
-    const z = 8 - smooth.current * depth;
-    const px = mouse.current.x * 1.3; // parallax sway
-    const py = mouse.current.y * 0.8;
-    easing.damp3(state.camera.position, [px, py, z], 0.35, dt);
-    state.camera.lookAt(px * 0.35, py * 0.35, z - 7);
+    const v = velocity.current;
+    const o = offset.current;
+    o.x = Math.max(-bound.x, Math.min(bound.x, o.x + v.x));
+    o.y = Math.max(-bound.y, Math.min(bound.y, o.y + v.y));
+    v.x *= 0.9; // momentum decay
+    v.y *= 0.9;
+    easing.damp3(state.camera.position, [o.x, o.y, 8], 0.2, dt);
+    state.camera.lookAt(o.x, o.y, -6);
   });
   return null;
 }
