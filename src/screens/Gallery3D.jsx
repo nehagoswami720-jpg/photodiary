@@ -14,7 +14,8 @@ import { formatDate, formatTime } from '../lib/format.js';
 const HELVETICA = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const BG = '#ffffff';
 const RADIUS = 7; // sphere radius
-const GOLDEN = Math.PI * (3 - Math.sqrt(5)); // even Fibonacci distribution
+const GOLDEN = Math.PI * (3 - Math.sqrt(5)); // golden angle for the spiral
+const SPREAD = 0.26; // angular spacing between photos (smaller = denser cluster)
 
 // deterministic pseudo-random in [-1,1] from a string + salt
 function rand(str, salt) {
@@ -35,16 +36,20 @@ export default function Gallery3D({ entries, onAddMoment }) {
   }, [entries]);
   useEffect(() => () => urlById.forEach((u) => URL.revokeObjectURL(u)), [urlById]);
 
-  // spread photos evenly over the whole sphere (every direction) so rotating
-  // any way — up, down, sideways, diagonal — keeps bringing photos in
+  // pack photos in a tight spiral cluster on the front of the sphere (constant
+  // density — dense even with few photos), growing outward as photos are added.
+  // Because they stay near the front they barely twist, yet you can still rotate
+  // any direction to explore the growing cluster.
   const cards = useMemo(() => {
-    const n = entries.length;
     return entries.map((e, i) => {
-      const y = (n > 1 ? 1 - (i / (n - 1)) * 2 : 0) * 0.92; // -0.92..0.92
-      const r = Math.sqrt(Math.max(0, 1 - y * y));
-      const theta = i * GOLDEN;
-      const rr = RADIUS * (0.95 + Math.abs(rand(e.id, 4)) * 0.12);
-      return { id: e.id, position: [Math.cos(theta) * r * rr, y * rr, Math.sin(theta) * r * rr] };
+      const phi = SPREAD * Math.sqrt(i); // angular distance from the front pole (-z)
+      const a = i * GOLDEN; // azimuth around the spiral
+      const rr = RADIUS * (0.96 + Math.abs(rand(e.id, 4)) * 0.07);
+      const sp = Math.sin(phi);
+      return {
+        id: e.id,
+        position: [sp * Math.cos(a) * rr, sp * Math.sin(a) * rr, -Math.cos(phi) * rr],
+      };
     });
   }, [entries]);
 
