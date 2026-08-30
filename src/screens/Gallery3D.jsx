@@ -6,16 +6,16 @@ import Wordmark from '../components/Wordmark.jsx';
 import { PlusIcon } from '../components/icons.jsx';
 import { formatDate, formatTime } from '../lib/format.js';
 
-// The 3D gallery — a sphere of memories. Photos sit on the inside surface of a
-// sphere facing the center; the camera sits AT the center and rotates with the
-// cursor, so you look around the inside like a planetarium. Curvature at the
-// edges is automatic (perspective on inward-facing photos), movement is
-// infinite (rotation wraps), and every cursor direction steers continuously.
-// Same data as before; "Upload a moment" runs the same upload flow.
+// The 3D gallery — a cylinder of memories (a lampshade). Photos sit on the
+// inside wall, upright, facing the central axis; the camera sits at the center
+// and rotates with cursor MOVEMENT (stops when the cursor stops). Horizontal
+// rotation wraps infinitely; a little vertical look is allowed. Edge curvature
+// is subtle and automatic. Same data as before; "Upload a moment" unchanged.
 const HELVETICA = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const BG = '#ffffff';
-const RADIUS = 9; // sphere radius
-const GOLDEN = Math.PI * (3 - Math.sqrt(5)); // for even Fibonacci distribution
+const RADIUS = 7; // cylinder radius
+const COL_STEP = 0.46; // angular gap between columns (~26°)
+const ROW_STEP = 3.0; // vertical gap between rows
 
 // deterministic pseudo-random in [-1,1] from a string + salt
 function rand(str, salt) {
@@ -26,7 +26,8 @@ function rand(str, salt) {
 
 export default function Gallery3D({ entries, onAddMoment }) {
   const [focusedId, setFocusedId] = useState(null);
-  const mouse = useRef({ x: 0, y: 0 }); // cursor position, -1..1 from center
+  const vel = useRef({ yaw: 0, pitch: 0 }); // angular velocity from cursor movement
+  const last = useRef(null); // last cursor position (px)
 
   const urlById = useMemo(() => {
     const m = new Map();
@@ -35,26 +36,30 @@ export default function Gallery3D({ entries, onAddMoment }) {
   }, [entries]);
   useEffect(() => () => urlById.forEach((u) => URL.revokeObjectURL(u)), [urlById]);
 
-  // distribute photos over the inside of the sphere (Fibonacci = even coverage)
+  // pack photos in a grid on the cylinder wall (dense; wraps as photos grow)
   const cards = useMemo(() => {
     const n = entries.length;
+    const cols = Math.min(n, 7);
+    const rows = Math.ceil(n / cols);
     return entries.map((e, i) => {
-      const y = (n > 1 ? 1 - (i / (n - 1)) * 2 : 0) * 0.82; // -0.82..0.82 (avoid poles)
-      const r = Math.sqrt(Math.max(0, 1 - y * y));
-      const theta = i * GOLDEN;
-      const radius = RADIUS * (0.9 + Math.abs(rand(e.id, 4)) * 0.22); // slight variety
-      return {
-        id: e.id,
-        position: [Math.cos(theta) * r * radius, y * radius, Math.sin(theta) * r * radius],
-      };
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const ang = (col - (cols - 1) / 2) * COL_STEP + rand(e.id, 1) * 0.05;
+      const h = ((rows - 1) / 2 - row) * ROW_STEP + rand(e.id, 2) * 0.4;
+      const rr = RADIUS * (0.96 + Math.abs(rand(e.id, 4)) * 0.1);
+      return { id: e.id, position: [Math.sin(ang) * rr, h, -Math.cos(ang) * rr] };
     });
   }, [entries]);
 
   const focused = focusedId ? entries.find((e) => e.id === focusedId) : null;
 
+  // cursor MOVEMENT (delta) rotates the view → stops when the cursor stops.
   function onMove(e) {
-    mouse.current.x = (e.clientX / window.innerWidth) * 2 - 1;
-    mouse.current.y = -((e.clientY / window.innerHeight) * 2 - 1);
+    if (last.current) {
+      vel.current.yaw -= (e.clientX - last.current.x) * 0.00045;
+      vel.current.pitch += (e.clientY - last.current.y) * 0.0004;
+    }
+    last.current = { x: e.clientX, y: e.clientY };
   }
 
   return (
@@ -64,12 +69,12 @@ export default function Gallery3D({ entries, onAddMoment }) {
       onPointerMove={onMove}
     >
       <Canvas
-        camera={{ position: [0, 0, 0], fov: 62 }}
+        camera={{ position: [0, 0, 0], fov: 52 }}
         onPointerMissed={() => setFocusedId(null)}
         style={{ width: '100%', height: '100%', display: 'block' }}
       >
         <color attach="background" args={[BG]} />
-        <RotateRig mouse={mouse} />
+        <RotateRig vel={vel} />
         <Suspense fallback={null}>
           {cards.map((c) => (
             <MomentPlane
@@ -125,24 +130,21 @@ export default function Gallery3D({ entries, onAddMoment }) {
   );
 }
 
-// Cursor steers the camera's rotation from the sphere's center: further from
-// center = faster spin. Yaw wraps infinitely; pitch is softly limited so you
-// never flip over the poles. Photos glide opposite to the cursor.
-const ROT_SPEED = 1.2; // rad/sec at full cursor deflection
-const DEAD_ZONE = 0.04;
-const MAX_PITCH = 1.15; // ~66°
-function RotateRig({ mouse }) {
+// Cursor movement adds angular velocity; it decays each frame, so the view
+// glides briefly and then STOPS when the cursor stops. Yaw wraps infinitely;
+// pitch is softly limited to the height of the photo band.
+const MAX_PITCH = 0.55; // ~31°
+function RotateRig({ vel }) {
   const rot = useRef({ yaw: 0, pitch: 0 });
   useFrame((state, dt) => {
-    const m = mouse.current;
-    const ax = Math.abs(m.x) > DEAD_ZONE ? m.x : 0;
-    const ay = Math.abs(m.y) > DEAD_ZONE ? m.y : 0;
-    rot.current.yaw -= ax * ROT_SPEED * dt; // infinite (wraps)
-    rot.current.pitch -= ay * ROT_SPEED * dt;
+    rot.current.yaw += vel.current.yaw;
+    rot.current.pitch += vel.current.pitch;
     rot.current.pitch = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, rot.current.pitch));
+    vel.current.yaw *= 0.8; // decay → stops shortly after the cursor stops
+    vel.current.pitch *= 0.8;
     state.camera.rotation.order = 'YXZ';
-    easing.damp(state.camera.rotation, 'y', rot.current.yaw, 0.25, dt);
-    easing.damp(state.camera.rotation, 'x', rot.current.pitch, 0.25, dt);
+    easing.damp(state.camera.rotation, 'y', rot.current.yaw, 0.1, dt);
+    easing.damp(state.camera.rotation, 'x', rot.current.pitch, 0.1, dt);
   });
   return null;
 }

@@ -51,7 +51,7 @@ export default function MomentPlane({ id, url, position, focused, onFocus }) {
       easing.damp3(g.scale, [1.5, 1.5, 1.5], 0.2, dt);
     } else {
       easing.damp3(g.position, position, 0.5, dt);
-      g.lookAt(0, 0, 0); // face the sphere's center (the camera)
+      g.lookAt(0, position[1], 0); // face the cylinder axis at its own height (upright)
       g.rotateZ(roll.current); // a touch of organic roll
       easing.damp3(g.scale, hovered ? [1.12, 1.12, 1.12] : [1, 1, 1], 0.2, dt);
     }
