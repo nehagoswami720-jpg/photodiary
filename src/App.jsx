@@ -7,6 +7,7 @@ import ErrorState from './screens/ErrorState.jsx';
 import Card from './screens/Card.jsx';
 import ManualIntro from './screens/ManualIntro.jsx';
 import ManualForm from './screens/ManualForm.jsx';
+import ManualDeck from './screens/ManualDeck.jsx';
 import Gallery from './screens/Gallery.jsx';
 import Gallery3D from './screens/Gallery3D.jsx';
 import { readPhotoData } from './lib/exif.js';
@@ -95,6 +96,8 @@ export default function App() {
   }); // { place, capturedAt, imageUrl, showTime }
   const runIdRef = useRef(0); // lets a newer upload cancel an in-flight one
   const pendingRef = useRef(null); // the current photo blob + coords, for saving
+  const batchRef = useRef([]); // auto-detected photos from a batch, held until the deck is done
+  const [deck, setDeck] = useState([]); // undetected photos from a batch, awaiting manual details
 
   // On load, open the gallery of saved moments (or the drop zone if empty).
   useEffect(() => {
@@ -226,6 +229,141 @@ export default function App() {
     }
   }
 
+  // Entry point for the file input(s): one photo keeps the existing single flow;
+  // several photos run the batch flow (combined progress → deck for undetected).
+  function handleUpload(fileList) {
+    const list = Array.from(fileList || []);
+    if (!list.length) return;
+    if (list.length === 1) return handleFile(list[0]);
+    return handleBatch(list);
+  }
+
+  // Turn one manually-entered {place,date,time} into { capturedAt, showTime },
+  // falling back to the photo's own EXIF date when nothing was typed.
+  function resolveManual({ place, date, time }, exifCapturedAt) {
+    let capturedAt = null;
+    let showTime = false;
+    if (date) {
+      const [y, m, d] = date.split('-').map(Number);
+      if (time) {
+        const [hh, mm] = time.split(':').map(Number);
+        capturedAt = new Date(y, m - 1, d, hh, mm);
+        showTime = true;
+      } else {
+        capturedAt = new Date(y, m - 1, d);
+      }
+    } else if (exifCapturedAt instanceof Date) {
+      capturedAt = exifCapturedAt;
+      showTime = true;
+    }
+    const source = place || date ? 'manual' : 'exif';
+    return { place: place?.trim() || null, capturedAt, showTime, source };
+  }
+
+  // Process several photos with one combined progress bar. Detected photos are
+  // held in memory; undetected ones open the deck. NOTHING is saved until the
+  // whole flow finishes (Done in the deck, or the success beat when all detected).
+  async function handleBatch(list) {
+    const runId = ++runIdRef.current;
+    const live = () => runId === runIdRef.current;
+
+    setScreen('loading');
+    setBusy(false); // batch drives its own "X of N" status, not the phrase loop
+    setPercent(0);
+    setStatus(`reading your photos — 0 of ${list.length}`);
+
+    const results = [];
+    for (let i = 0; i < list.length; i++) {
+      if (!live()) return;
+      setStatus(`reading your photos — ${i} of ${list.length}`);
+      const file = list[i];
+      try {
+        if (!(await isReadableImage(file))) continue; // silently skip non-images
+        const data = await readPhotoData(file);
+        const [card, displayBlob] = await Promise.all([
+          buildCard(data, { homeCountry: HOME_COUNTRY }),
+          toDisplayBlob(file),
+        ]);
+        results.push({ file: displayBlob, place: card.place, capturedAt: data.capturedAt, lat: data.lat, lon: data.lon });
+      } catch {
+        /* skip a photo that fails to read */
+      }
+      if (!live()) return;
+      setPercent(Math.round(((i + 1) / list.length) * 100));
+    }
+    if (!live()) return;
+    setStatus(`reading your photos — ${list.length} of ${list.length}`);
+    setPercent(100);
+
+    const detected = results.filter((r) => r.place);
+    const undetected = results.filter((r) => !r.place);
+    batchRef.current = detected;
+
+    if (undetected.length === 0) {
+      // everything found a place → success beat, then save the batch → gallery
+      setScreen('success');
+      await delay(1600);
+      if (!live()) return;
+      await saveBatch(detected, [], []);
+      goHome();
+    } else {
+      // hold the detected ones; open the deck for the rest
+      setDeck(undetected.map((u) => ({ ...u, imageUrl: URL.createObjectURL(u.file) })));
+      setScreen('deck');
+    }
+  }
+
+  // Save the whole batch at once: the auto-detected photos plus the deck photos
+  // with whatever details were entered (deckValues aligns with deckItems).
+  async function saveBatch(detectedItems, deckItems, deckValues) {
+    for (const d of detectedItems) {
+      await saveOne({ file: d.file, place: d.place, capturedAt: d.capturedAt, showTime: d.capturedAt instanceof Date, lat: d.lat, lon: d.lon, source: 'exif' });
+    }
+    for (let i = 0; i < deckItems.length; i++) {
+      const it = deckItems[i];
+      const r = resolveManual(deckValues[i] || {}, it.capturedAt);
+      await saveOne({ file: it.file, place: r.place, capturedAt: r.capturedAt, showTime: r.showTime, lat: it.lat, lon: it.lon, source: r.source });
+    }
+    requestPersistence();
+  }
+
+  // Persist one entry (best-effort), same shape as saveCurrent.
+  async function saveOne({ file, place, capturedAt, showTime, lat, lon, source }) {
+    try {
+      await saveEntry({
+        id: crypto.randomUUID(),
+        photoBlob: file,
+        place: place ?? null,
+        capturedAt: capturedAt ?? null,
+        showTime: !!showTime,
+        lat: lat ?? null,
+        lon: lon ?? null,
+        source,
+        createdAt: new Date(),
+      });
+    } catch {
+      /* keep going even if one fails */
+    }
+  }
+
+  // Deck "Add to diary" → save the batch → gallery.
+  async function finishDeck(deckValues) {
+    await saveBatch(batchRef.current, deck, deckValues);
+    deck.forEach((it) => it.imageUrl && URL.revokeObjectURL(it.imageUrl));
+    setDeck([]);
+    batchRef.current = [];
+    goHome();
+  }
+
+  // Deck "Cancel" → discard the whole batch (nothing was saved yet).
+  function cancelDeck() {
+    runIdRef.current++;
+    deck.forEach((it) => it.imageUrl && URL.revokeObjectURL(it.imageUrl));
+    setDeck([]);
+    batchRef.current = [];
+    goHome();
+  }
+
   // Build the moment from manually-entered fields (all optional; only what was
   // entered is shown). Date & time come from custom pickers, so no guesswork.
   // Save, then drop into the updated gallery.
@@ -259,16 +397,19 @@ export default function App() {
 
   // The 3D gallery takes over the full screen (dark scene, its own wordmark).
   if (screen === 'gallery') {
-    return <Gallery3D entries={entries} onAddMoment={handleFile} />;
+    return <Gallery3D entries={entries} onAddMoment={handleUpload} />;
   }
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-white">
       <Wordmark />
       <div className="flex w-full flex-1 items-center justify-center py-10">
-        {screen === 'empty' && <EmptyState onFile={handleFile} />}
+        {screen === 'empty' && <EmptyState onFiles={handleUpload} />}
         {screen === 'loading' && <Loading percent={percent} status={status} />}
         {screen === 'success' && <Success />}
+        {screen === 'deck' && deck.length > 0 && (
+          <ManualDeck items={deck} onDone={finishDeck} onCancel={cancelDeck} />
+        )}
         {screen === 'error' && <ErrorState percent={failPercent} onRetry={goHome} />}
         {/* the single hero card is now only used for the ?state=card preview
             (and, later, a detail view when tapping a grid moment) */}

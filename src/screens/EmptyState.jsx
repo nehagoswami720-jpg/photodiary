@@ -1,8 +1,8 @@
 import { useRef } from 'react';
 
 // Screen 1 — the empty / resting state: the dashed upload container.
-// Calls onFile(file) when a photo is dropped or chosen.
-export default function EmptyState({ onFile }) {
+// Calls onFiles(fileList) when photos are dropped or chosen (one or many).
+export default function EmptyState({ onFiles }) {
   const inputRef = useRef(null);
 
   return (
@@ -11,15 +11,16 @@ export default function EmptyState({ onFile }) {
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => {
         e.preventDefault();
-        onFile(e.dataTransfer.files?.[0]);
+        onFiles(e.dataTransfer.files);
       }}
     >
       <input
         ref={inputRef}
         type="file"
         accept="image/*,.heic,.heif"
+        multiple
         className="hidden"
-        onChange={(e) => onFile(e.target.files?.[0])}
+        onChange={(e) => onFiles(e.target.files)}
       />
       <img src="/camera.svg" alt="" className="h-[120px] w-[210px]" />
       <p
