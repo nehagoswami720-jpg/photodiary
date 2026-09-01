@@ -1,7 +1,8 @@
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { easing } from 'maath';
-import MomentPlane from '../components/MomentPlane.jsx';
+import MomentPlane, { FOCUS_DIST, FOCUS_SCALE, PHOTO_H } from '../components/MomentPlane.jsx';
+import SparkleCursor from '../components/SparkleCursor.jsx';
 import Wordmark from '../components/Wordmark.jsx';
 import { PlusIcon } from '../components/icons.jsx';
 import { formatDate, formatTime } from '../lib/format.js';
@@ -14,7 +15,7 @@ import { formatDate, formatTime } from '../lib/format.js';
 // "Upload a moment" unchanged.
 const HELVETICA = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const BG = '#0a0a0c'; // near-black: translucency & atmospheric fade read as depth, not wash
-const DENSE_CELL = 1.45; // tightest spacing — smaller than a photo, so they overlap
+const DENSE_CELL = 1.6; // tightest spacing — smaller than a photo, so they overlap
                          // (the Z-depth scatter turns that overlap into layered depth)
 const DEPTH = 3.6; // how far photos scatter toward/away from the camera in Z — wider
                    // spread = stronger near/far/furthest variance (size, brightness, opacity)
@@ -28,11 +29,21 @@ function rand(str, salt) {
   return (((h >>> 0) % 10000) / 10000) * 2 - 1;
 }
 
+// deterministic [0,1) hash of a grid cell — used only to break exact fill-order
+// ties so mirror cells don't systematically favor one side
+function cellJitter(gx, gy) {
+  let h = Math.imul(gx ^ 0x9e3779b1, 2654435761) ^ Math.imul(gy ^ 0x85ebca6b, 40503);
+  h = Math.imul(h ^ (h >>> 15), 2246822519);
+  return ((h >>> 0) % 100000) / 100000;
+}
+
 export default function Gallery3D({ entries, onAddMoment }) {
   const [focusedId, setFocusedId] = useState(null);
   const vel = useRef({ x: 0, y: 0 }); // pan velocity from cursor movement
   const offset = useRef({ x: 0, y: 0 }); // current camera pan
   const last = useRef(null); // last cursor position (px)
+  const wordmarkRef = useRef(null); // measured to place the focused photo 48px below it
+  const [focusLayout, setFocusLayout] = useState({ up: 0.5, captionTop: null });
 
   const urlById = useMemo(() => {
     const m = new Map();
@@ -57,13 +68,22 @@ export default function Gallery3D({ entries, onAddMoment }) {
     const viewW = viewH * aspect;
 
     // build grid cells and order them by aspect-weighted rings from the center
-    // (primary: which rectangular ring; secondary: distance within it, for a smooth spiral)
+    // (primary: which rectangular ring; secondary: distance within it, for a smooth
+    // spiral). The final `jit` tiebreak is a deterministic per-cell hash so that
+    // mirror cells (e.g. left vs right) fill in an unbiased order — otherwise the
+    // stable sort keeps generation order and the field leans to one side.
     const R = Math.ceil(Math.sqrt(n)) + 2;
     const cells = [];
     for (let gx = -Math.ceil(R * aspect); gx <= Math.ceil(R * aspect); gx++)
       for (let gy = -R; gy <= R; gy++)
-        cells.push({ gx, gy, ring: Math.max(Math.abs(gx) / aspect, Math.abs(gy)), rad: (gx / aspect) ** 2 + gy ** 2 });
-    cells.sort((a, b) => a.ring - b.ring || a.rad - b.rad);
+        cells.push({
+          gx,
+          gy,
+          ring: Math.max(Math.abs(gx) / aspect, Math.abs(gy)),
+          rad: (gx / aspect) ** 2 + gy ** 2,
+          jit: cellJitter(gx, gy),
+        });
+    cells.sort((a, b) => a.ring - b.ring || a.rad - b.rad || a.jit - b.jit);
     const used = cells.slice(0, n);
 
     // grid extent (in cells) of what's actually filled, so the field is proportioned
@@ -109,8 +129,36 @@ export default function Gallery3D({ entries, onAddMoment }) {
 
   const focused = focusedId ? entries.find((e) => e.id === focusedId) : null;
 
-  // cursor MOVEMENT pans the field opposite; stops when the cursor stops.
+  // When a photo is spotlit, project its on-screen bounds so the wordmark sits 48px
+  // above it and the caption 24px below it (the photo's screen HEIGHT is constant,
+  // so this holds for any photo). Recomputed on focus and on resize.
+  useLayoutEffect(() => {
+    if (focusedId === null) return;
+    function compute() {
+      const vh = window.innerHeight;
+      const viewHalf = FOCUS_DIST * Math.tan(((FOV / 2) * Math.PI) / 180); // world half-height at the photo plane
+      const halfH = (PHOTO_H * FOCUS_SCALE) / 2;
+      const wm = wordmarkRef.current?.getBoundingClientRect();
+      const wordBottom = wm ? wm.bottom : 112;
+      const topPx = wordBottom + 48; // photo TOP sits 48px below MOMENTS
+      // world up-offset so the photo's top edge projects to topPx
+      const up = viewHalf * (1 - (2 * topPx) / vh) - halfH;
+      // caption sits 24px below the photo's bottom edge
+      const captionTop = (vh / 2) * (1 - (up - halfH) / viewHalf) + 24;
+      setFocusLayout({ up, captionTop });
+    }
+    compute();
+    window.addEventListener('resize', compute);
+    return () => window.removeEventListener('resize', compute);
+  }, [focusedId]);
+
+  // cursor MOVEMENT pans the field opposite; stops when the cursor stops. While a
+  // photo is focused the field is frozen, so the spotlit photo stays put.
   function onMove(e) {
+    if (focusedId !== null) {
+      last.current = { x: e.clientX, y: e.clientY };
+      return;
+    }
     if (last.current) {
       vel.current.x += (e.clientX - last.current.x) * 0.0022;
       vel.current.y -= (e.clientY - last.current.y) * 0.0022;
@@ -133,7 +181,7 @@ export default function Gallery3D({ entries, onAddMoment }) {
         {/* fog fades photos into the black by distance: near ones crisp, far
             ones sink toward the background — strong atmospheric depth */}
         <fog attach="fog" args={[BG, 7, 14]} />
-        <PanRig vel={vel} offset={offset} bound={bound} />
+        <PanRig vel={vel} offset={offset} bound={bound} frozen={focusedId !== null} />
         {/* each photo in its own Suspense so they stream in as they decode,
             instead of the whole field blocking until every texture is ready */}
         {cards.map((c) => (
@@ -144,6 +192,8 @@ export default function Gallery3D({ entries, onAddMoment }) {
               position={c.position}
               depth={c.depth}
               focused={focusedId === c.id}
+              dimmed={focusedId !== null && focusedId !== c.id}
+              focusUp={focusLayout.up}
               onFocus={setFocusedId}
             />
           </Suspense>
@@ -158,21 +208,36 @@ export default function Gallery3D({ entries, onAddMoment }) {
         <div className="absolute inset-y-0 right-0 w-36 bg-gradient-to-l from-[#0a0a0c] to-transparent" />
       </div>
 
-      <div className="pointer-events-none fixed inset-0 z-20 flex flex-col items-center">
+      <SparkleCursor />
+
+      <div ref={wordmarkRef} className="pointer-events-none fixed inset-x-0 top-0 z-20 flex flex-col items-center">
         <Wordmark color="#f4f4f4" />
       </div>
 
-      {focused && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-28 z-20 flex flex-col items-center text-center">
+      {/* caption for the focused moment — sits BELOW the spotlit photo, in the
+          dimmed space, styled like the reference: an airy letter-spaced title with
+          a smaller tracked subtitle beneath */}
+      {focused && focusLayout.captionTop != null && (
+        <div
+          key={focused.id}
+          className="caption-in pointer-events-none fixed inset-x-0 z-20 flex flex-col items-center gap-2 px-8 text-center"
+          style={{ top: focusLayout.captionTop }}
+        >
           {focused.place && (
-            <p className="text-[22px] text-[#eaeaea]" style={{ fontFamily: '"Mulish", sans-serif', fontWeight: 500 }}>
+            <p
+              className="uppercase leading-[1.2] text-[24px] tracking-[0.08em] text-white/95"
+              style={{ fontFamily: '"Newsreader", serif', fontWeight: 300 }}
+            >
               {focused.place}
             </p>
           )}
           {focused.capturedAt instanceof Date && (
-            <p className="text-[16px] italic text-[#9a9a9a]" style={{ fontFamily: '"Newsreader", serif' }}>
+            <p
+              className="uppercase text-[16px] tracking-[0.18em] text-white/55"
+              style={{ fontFamily: '"Newsreader", serif', fontWeight: 300 }}
+            >
               {formatDate(focused.capturedAt)}
-              {focused.showTime ? ` · ${formatTime(focused.capturedAt)}` : ''}
+              {focused.showTime ? `  ·  ${formatTime(focused.capturedAt)}` : ''}
             </p>
           )}
         </div>
@@ -194,14 +259,20 @@ export default function Gallery3D({ entries, onAddMoment }) {
 // Cursor movement pans the camera across the field; velocity decays (stops when
 // the cursor stops). At the field edge the offset is hard-clamped and its velocity
 // killed — so it eases to a smooth, buttery stop with no rubber-band bounce.
-function PanRig({ vel, offset, bound }) {
+function PanRig({ vel, offset, bound, frozen }) {
   useFrame((state, dt) => {
     const v = vel.current;
     const o = offset.current;
+    if (frozen) {
+      // a photo is spotlit — hold the camera perfectly still so it stays stationary
+      v.x = 0;
+      v.y = 0;
+      return;
+    }
     o.x += v.x;
     o.y += v.y;
-    v.x *= 0.82;
-    v.y *= 0.82;
+    v.x *= 0.9; // more inertia → buttery gliding after the cursor eases off
+    v.y *= 0.9;
     // hard stop at the edge (no overshoot, no spring-back → no bounce)
     if (o.x <= -bound.x) { o.x = -bound.x; if (v.x < 0) v.x = 0; }
     else if (o.x >= bound.x) { o.x = bound.x; if (v.x > 0) v.x = 0; }
