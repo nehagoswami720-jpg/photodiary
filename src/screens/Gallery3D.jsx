@@ -3,7 +3,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { easing } from 'maath';
 import MomentPlane, { FOCUS_DIST, FOCUS_SCALE, PHOTO_H } from '../components/MomentPlane.jsx';
 import SparkleCursor from '../components/SparkleCursor.jsx';
-import Wordmark from '../components/Wordmark.jsx';
+import MomentsMark from '../components/MomentsMark.jsx';
 import { PlusIcon } from '../components/icons.jsx';
 import { formatDate, formatTime } from '../lib/format.js';
 
@@ -37,7 +37,7 @@ function cellJitter(gx, gy) {
   return ((h >>> 0) % 100000) / 100000;
 }
 
-export default function Gallery3D({ entries, onAddMoment }) {
+export default function Gallery3D({ entries, onAddMoment, onBack, albumTitle, coverId, onSetCover }) {
   const [focusedId, setFocusedId] = useState(null);
   const vel = useRef({ x: 0, y: 0 }); // pan velocity from cursor movement
   const offset = useRef({ x: 0, y: 0 }); // current camera pan
@@ -62,8 +62,11 @@ export default function Gallery3D({ entries, onAddMoment }) {
   const { cards, bound } = useMemo(() => {
     const n = entries.length;
 
-    // how much world-space the camera sees at the photos' plane (z ≈ 0)
-    const aspect = typeof window !== 'undefined' ? window.innerWidth / window.innerHeight : 1.78;
+    // how much world-space the camera sees at the photos' plane (z ≈ 0).
+    // Guard the aspect: a hidden/zero-size viewport would make it 0/NaN/Infinity,
+    // which would empty the cell grid below and crash — fall back to a sane 16:10.
+    let aspect = typeof window !== 'undefined' ? window.innerWidth / window.innerHeight : 1.6;
+    if (!(aspect > 0.2 && aspect < 6)) aspect = 1.6;
     const viewH = 2 * CAM_Z * Math.tan(((FOV / 2) * Math.PI) / 180);
     const viewW = viewH * aspect;
 
@@ -210,8 +213,27 @@ export default function Gallery3D({ entries, onAddMoment }) {
 
       <SparkleCursor />
 
-      <div ref={wordmarkRef} className="pointer-events-none fixed inset-x-0 top-0 z-20 flex flex-col items-center">
-        <Wordmark color="#f4f4f4" />
+      {/* back to the album shelf (only when opened from an album) */}
+      {onBack && (
+        <div className="fixed left-7 top-8 z-30 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="pointer-events-auto flex cursor-pointer items-center gap-1.5 text-[15px] tracking-[-0.3px] text-white/70 transition-colors hover:text-white"
+            style={{ fontFamily: HELVETICA, fontWeight: 400 }}
+          >
+            <span className="text-[19px] leading-none">‹</span> Albums
+          </button>
+          {albumTitle && (
+            <span className="text-[14px] text-white/35" style={{ fontFamily: HELVETICA }}>
+              / {albumTitle}
+            </span>
+          )}
+        </div>
+      )}
+
+      <div ref={wordmarkRef} className="pointer-events-none fixed inset-x-0 top-0 z-20 flex flex-col items-center pt-12">
+        <MomentsMark centered />
       </div>
 
       {/* caption for the focused moment — sits BELOW the spotlit photo, in the
@@ -240,6 +262,25 @@ export default function Gallery3D({ entries, onAddMoment }) {
               {focused.showTime ? `  ·  ${formatTime(focused.capturedAt)}` : ''}
             </p>
           )}
+          {/* make this moment the album's cover (persisted) */}
+          {onSetCover &&
+            (focused.id === coverId ? (
+              <span
+                className="mt-3 text-[11px] uppercase tracking-[0.22em] text-white/40"
+                style={{ fontFamily: HELVETICA }}
+              >
+                ✓ Album cover
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onSetCover(focused.id)}
+                className="pointer-events-auto mt-3 border border-white/25 px-4 py-[7px] text-[11px] uppercase tracking-[0.22em] text-white/80 transition-colors hover:border-white/60 hover:text-white"
+                style={{ fontFamily: HELVETICA }}
+              >
+                Set as cover
+              </button>
+            ))}
         </div>
       )}
 

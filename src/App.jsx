@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Wordmark from './components/Wordmark.jsx';
 import EmptyState from './screens/EmptyState.jsx';
 import Loading from './screens/Loading.jsx';
@@ -10,10 +10,12 @@ import ManualForm from './screens/ManualForm.jsx';
 import ManualDeck from './screens/ManualDeck.jsx';
 import Gallery from './screens/Gallery.jsx';
 import Gallery3D from './screens/Gallery3D.jsx';
+import AlbumShelf from './screens/AlbumShelf.jsx';
+import { groupIntoAlbums } from './lib/albums.js';
 import { readPhotoData } from './lib/exif.js';
 import { buildCard } from './lib/card.js';
 import { toDisplayBlob } from './lib/heic.js';
-import { saveEntry, getAllEntries, requestPersistence } from './lib/db.js';
+import { saveEntry, getAllEntries, requestPersistence, getCoverMap, setCover } from './lib/db.js';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 const HELVETICA = '"Helvetica Neue", Helvetica, Arial, sans-serif';
@@ -98,6 +100,19 @@ export default function App() {
   const pendingRef = useRef(null); // the current photo blob + coords, for saving
   const batchRef = useRef([]); // auto-detected photos from a batch, held until the deck is done
   const [deck, setDeck] = useState([]); // undetected photos from a batch, awaiting manual details
+  const [activeAlbumId, setActiveAlbumId] = useState(null); // null = album shelf; else the open album's canvas
+  const [coverMap, setCoverMap] = useState({}); // albumId -> chosen cover entry id (user-picked)
+
+  // Albums for the home shelf: an "All moments" cover (opens the full canvas) plus
+  // one per location (groupIntoAlbums, honest place-only grouping). Each album's
+  // `cover` is the user-chosen moment if set, else its most recent.
+  const albums = useMemo(() => {
+    const list = [{ id: '__all__', title: 'All moments', place: null, moments: entries }, ...groupIntoAlbums(entries)];
+    return list.map((a) => ({
+      ...a,
+      cover: a.moments.find((m) => m.id === coverMap[a.id]) || a.moments[0] || null,
+    }));
+  }, [entries, coverMap]);
 
   // On load, open the gallery of saved moments (or the drop zone if empty).
   useEffect(() => {
@@ -108,7 +123,18 @@ export default function App() {
         setScreen(all.length ? 'gallery' : 'empty');
       })
       .catch(() => setScreen('empty'));
+    getCoverMap().then(setCoverMap).catch(() => {});
   }, []);
+
+  // Persist a user-chosen album cover, then reflect it on the shelf.
+  async function chooseCover(albumId, entryId) {
+    setCoverMap((m) => ({ ...m, [albumId]: entryId }));
+    try {
+      await setCover(albumId, entryId);
+    } catch {
+      /* keep working even if saving fails */
+    }
+  }
 
   // Return to the gallery (reloading moments); the drop zone if the diary is empty.
   async function goHome() {
@@ -118,6 +144,7 @@ export default function App() {
     pendingRef.current = null;
     if (result?.imageUrl) URL.revokeObjectURL(result.imageUrl);
     setResult(null);
+    setActiveAlbumId(null); // land back on the album shelf
     const all = await getAllEntries().catch(() => []);
     setEntries(all);
     setScreen(all.length ? 'gallery' : 'empty');
@@ -395,9 +422,23 @@ export default function App() {
     goHome();
   }
 
-  // The 3D gallery takes over the full screen (dark scene, its own wordmark).
+  // Home is the album shelf; opening an album takes over with the 3D canvas
+  // filtered to that album's moments (dark scene, its own wordmark).
   if (screen === 'gallery') {
-    return <Gallery3D entries={entries} onAddMoment={handleUpload} />;
+    if (activeAlbumId == null) {
+      return <AlbumShelf albums={albums} onOpen={setActiveAlbumId} onUpload={handleUpload} />;
+    }
+    const album = albums.find((a) => a.id === activeAlbumId) || albums[0];
+    return (
+      <Gallery3D
+        entries={album.moments}
+        onAddMoment={handleUpload}
+        onBack={() => setActiveAlbumId(null)}
+        albumTitle={album.place ?? album.title}
+        coverId={coverMap[album.id] ?? album.moments[0]?.id}
+        onSetCover={(entryId) => chooseCover(album.id, entryId)}
+      />
+    );
   }
 
   return (
