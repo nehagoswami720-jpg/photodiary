@@ -17,7 +17,7 @@ import { formatDate, formatTime } from '../lib/format.js';
 // "Upload a moment" unchanged.
 const HELVETICA = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const BG = '#050506'; // near-black: translucency & atmospheric fade read as depth, not wash
-const DENSE_CELL = 1.6; // tightest spacing — smaller than a photo, so they overlap
+const DENSE_CELL = 1.85; // tightest spacing — smaller than a photo, so they overlap
                          // (the Z-depth scatter turns that overlap into layered depth)
 const DEPTH = 3.6; // how far photos scatter toward/away from the camera in Z — wider
                    // spread = stronger near/far/furthest variance (size, brightness, opacity)
