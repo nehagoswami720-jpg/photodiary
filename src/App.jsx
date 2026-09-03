@@ -546,9 +546,13 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-[#050506]">
-      <div className="mt-12">
-        <MomentsMark centered />
-      </div>
+      {/* the wordmark rides the top of the minimal screens; the manual-entry
+          screens carry their own heading, so it's hidden there to avoid stacked text */}
+      {!['manual', 'form', 'deck'].includes(screen) && (
+        <div className="mt-12">
+          <MomentsMark centered />
+        </div>
+      )}
       <div className="flex w-full flex-1 items-center justify-center py-10">
         {screen === 'empty' && <EmptyState onFiles={handleUpload} />}
         {screen === 'loading' && <Loading percent={percent} status={status} />}
