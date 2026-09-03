@@ -249,7 +249,7 @@ export default function Gallery3D({ entries: rawEntries, onAddMoment, coverId, o
         >
           {focused.place && (
             <p
-              className="uppercase leading-[1.2] text-[24px] tracking-[0.08em] text-white/95"
+              className="uppercase leading-[1.2] text-[24px] tracking-[0.03em] text-white/95"
               style={{ fontFamily: '"Newsreader", serif', fontWeight: 300 }}
             >
               {focused.place}
@@ -257,7 +257,7 @@ export default function Gallery3D({ entries: rawEntries, onAddMoment, coverId, o
           )}
           {focused.capturedAt instanceof Date && (
             <p
-              className="uppercase text-[16px] tracking-[0.18em] text-white/55"
+              className="uppercase text-[16px] tracking-[0.08em] text-white/55"
               style={{ fontFamily: '"Newsreader", serif', fontWeight: 300 }}
             >
               {formatDate(focused.capturedAt)}
