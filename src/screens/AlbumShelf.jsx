@@ -334,7 +334,7 @@ export default function AlbumShelf({ albums, onOpen, onUpload }) {
           canvas menu); clicking it opens the file picker → the upload flow */}
       <label
         aria-label="Upload a moment"
-        className="pointer-events-auto fixed right-[40px] top-[40px] z-40 flex cursor-pointer items-center justify-center p-3 text-white transition-opacity hover:opacity-70"
+        className="pointer-events-auto fixed right-[40px] top-[65px] z-40 flex cursor-pointer items-center justify-center p-3 text-white transition-opacity hover:opacity-70"
       >
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
           <path d="M12 5v14M5 12h14" />
