@@ -31,6 +31,13 @@ export default function ManualDeck({ items, onDone, onCancel, places = [] }) {
 
   return (
     <div className="card-in flex w-full max-w-[88vw] flex-col items-center gap-7">
+      <img
+        src={it.imageUrl}
+        alt=""
+        className="block h-auto w-auto object-contain"
+        style={{ maxWidth: 'min(400px, 86vw)', maxHeight: '30vh' }}
+      />
+
       <div className="flex flex-col items-center gap-2 text-center">
         <p className="text-[24px] leading-[1.3] tracking-[-0.2px] text-[#eaeaea]" style={{ fontFamily: HELVETICA, fontWeight: 300 }}>
           This moment came without its story.
@@ -40,13 +47,6 @@ export default function ManualDeck({ items, onDone, onCancel, places = [] }) {
           through them below.
         </p>
       </div>
-
-      <img
-        src={it.imageUrl}
-        alt=""
-        className="block h-auto w-auto object-contain"
-        style={{ maxWidth: 'min(400px, 86vw)', maxHeight: '30vh' }}
-      />
 
       {/* ‹  2 of 3  › */}
       <div className="flex items-center gap-5" style={{ fontFamily: HELVETICA }}>
