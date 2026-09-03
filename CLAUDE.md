@@ -93,11 +93,20 @@ modal), browser-Back navigation (`App` `openAlbum`/`returnToShelf`/`popstate`),
 near-black `#050506` bg. Preview alias: photodiary-3d.vercel.app (`vercel --yes`
 + `vercel alias set`). Full detail in `docs/09-build-log.md`.
 
-**Post-merge to-do (fine-tuning + consistency):**
-- Per-photo canvas actions (set as cover / delete) — UI to design; handlers ready
-  (`onSetCover`, `onDeletePhoto`).
-- Dark-theme the 2D upload/loading/manual screens (brief white flash on upload).
-- Unified design-system / consistency pass across all screens.
+**v1 SHIPPED (2026-09-03)** — live at photodiary-eight.vercel.app and shared
+publicly. The post-merge polish is done: per-photo delete + set-cover UI (with a
+spin-in check), the top-right `CanvasMenu` (custom icon, dropdown, shared
+`ConfirmModal`), browser-Back on every page, full dark-mode of the 2D screens +
+one shared `MomentsMark` wordmark, global place autocomplete via Photon (`D30`),
+date/time picker motion, and a real perf fix — stable per-photo object URLs
+(`lib/photoUrls.js`) that stopped the GPU-texture leak causing progressive lag.
+Full detail in `docs/09-build-log.md` (§ v1 polish).
+
+**Possible next (deferred):**
+- Downscale very high-res photos (on upload and/or a one-time optimize pass) —
+  baseline texture memory, offered to owner.
+- Tagline still "a little home for your memories" (Figma has "some only happen
+  once") — left per owner.
 
 ## Still open (don't resolve unilaterally)
 

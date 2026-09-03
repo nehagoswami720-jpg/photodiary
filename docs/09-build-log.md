@@ -121,3 +121,61 @@ custom menu icon geometry is taken from the frame (278:450).
   white flash on upload) — reconcile to the dark theme.
 - A unified design-system / consistency pass across every screen (the v2 task above,
   now spanning the redesigned screens too).
+
+## v1 polish & fine-tuning (post-merge, 2026-09-03)
+
+With the redesign merged, the app went through a polish pass to reach a solid,
+shippable v1 — now live in production (`photodiary-eight.vercel.app`) and shared
+publicly (a LinkedIn screen recording). Highlights:
+
+### Delete & the canvas menu
+- **Per-photo actions** on the spotlit moment (Figma "delete photo UI"): "Set as
+  album cover" (solid white; a checkmark spins in as confirmation) and "Delete
+  photo" → the shared confirm modal.
+- **Top-right menu** (`CanvasMenu`): the user's own custom uneven-line icon that
+  settles to an even hamburger on hover; opens a dropdown (Upload a moment /
+  Delete album). Delete album → the same confirm modal (`ConfirmModal`, extracted
+  and shared with the photo flow).
+- **Homepage**: the bottom "Upload a moment" CTA became a plus icon top-right;
+  click → upload flow.
+
+### Navigation
+- **Browser Back works on every page** (`App` trap/`popstate` model): leaving home
+  drops one history entry, so Chrome Back returns to the shelf from anywhere
+  (album canvas, upload flow, manual entry), discarding in-flight work. The
+  on-screen breadcrumb was removed.
+
+### Dark mode & consistency
+- Every 2D flow screen (empty, loading, success, error, card, manual intro/form/
+  deck, date/time pickers) was dark-themed to the `#050506` system — no more white
+  flash on upload. Light-on-dark text, white primary buttons, dark input pills +
+  popovers, inverted camera glyph.
+- The whole app now shares one wordmark (`MomentsMark`, Cormorant Garamond),
+  top-left everywhere. Type sizes/tracking tuned per the designer.
+
+### Place autocomplete (D30 — a flagged principle change)
+- Manual place field autocompletes: own recorded places match instantly (on-device),
+  and global results come from the **Photon** geocoder. This sends typed text off
+  the device — a deliberate, owner-approved extension of principle #2, documented
+  in `06-decisions.md` D30.
+
+### Motion
+- Date/time pickers: direction-aware month slide, hover/press scaling, a pop on the
+  selected value. Menu: staggered dropdown entrance + hover dot.
+
+### Performance (the important fix)
+- **Progressive stutter/freezing** traced to object-URL churn: `urlById` and shelf
+  covers minted fresh `createObjectURL` on every album open/delete, and drei
+  `useTexture` caches GPU textures by URL string — so navigation leaked textures.
+  Fixed with **one stable URL per photo for the session** (`lib/photoUrls.js`),
+  reused across screens; URLs revoked on delete. GPU memory no longer climbs.
+
+### Demo seeding
+- For the recording, the diary can be seeded from the browser console (Picsum or
+  Unsplash-API snippets) — demo data staged knowingly, not the app inventing facts.
+
+### Open / possible next
+- Baseline texture memory for very high-res photos (downscale-on-upload and/or a
+  one-time optimize pass) — deferred, offered to the owner.
+- Tagline text still "a little home for your memories" (Figma shows "some only
+  happen once") — left per owner.
