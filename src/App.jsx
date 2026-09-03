@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import Wordmark from './components/Wordmark.jsx';
+import MomentsMark from './components/MomentsMark.jsx';
 import EmptyState from './screens/EmptyState.jsx';
 import Loading from './screens/Loading.jsx';
 import Success from './screens/Success.jsx';
@@ -504,8 +504,10 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-white">
-      <Wordmark />
+    <div className="flex min-h-screen flex-col items-center bg-[#050506]">
+      <div className="mt-12">
+        <MomentsMark centered />
+      </div>
       <div className="flex w-full flex-1 items-center justify-center py-10">
         {screen === 'empty' && <EmptyState onFiles={handleUpload} />}
         {screen === 'loading' && <Loading percent={percent} status={status} />}

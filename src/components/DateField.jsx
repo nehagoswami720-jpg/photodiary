@@ -47,28 +47,28 @@ export default function DateField({ value, onChange }) {
         type="button"
         onClick={toggle}
         className={`flex w-full items-center gap-2.5 rounded-[12px] px-4 py-2.5 text-left text-[15px] transition-colors ${
-          open ? 'bg-[#ececeb]' : 'bg-[#f3f3f2] hover:bg-[#ececeb]'
+          open ? 'bg-white/[0.1]' : 'bg-white/[0.06] hover:bg-white/[0.1]'
         }`}
       >
         <span className="text-[#8a8a8a]"><CalendarIcon /></span>
-        <span className={display ? 'text-[#333]' : 'text-[#8a8a8a]'}>{display || 'Add a date'}</span>
-        <span className="ml-auto text-[#aaa]"><Caret open={open} /></span>
+        <span className={display ? 'text-[#eaeaea]' : 'text-[#8a8a8a]'}>{display || 'Add a date'}</span>
+        <span className="ml-auto text-[#8a8a8a]"><Caret open={open} /></span>
       </button>
 
       {open && (
         <div
-          className={`picker-pop absolute left-0 z-20 w-[264px] rounded-xl border border-[#eee] bg-white p-3 shadow-[0_12px_40px_rgba(0,0,0,0.12)] ${
+          className={`picker-pop absolute left-0 z-20 w-[264px] rounded-xl border border-white/10 bg-[#0f0f0f] p-3 shadow-[0_18px_50px_rgba(0,0,0,0.6)] ${
             dropUp ? 'bottom-full mb-3' : 'top-full mt-3'
           }`}
         >
           <div className="mb-2 flex items-center justify-between">
             <Arrow dir="‹" onClick={() => setView(step(view, -1))} />
-            <span className="text-[14px] text-[#333]">{MONTHS[view.m]} {view.y}</span>
+            <span className="text-[14px] text-[#eaeaea]">{MONTHS[view.m]} {view.y}</span>
             <Arrow dir="›" onClick={() => setView(step(view, 1))} />
           </div>
           <div className="grid grid-cols-7 gap-y-1 text-center">
             {DOW.map((d, i) => (
-              <div key={i} className="pb-1 text-[11px] tracking-wide text-[#aaa]">{d}</div>
+              <div key={i} className="pb-1 text-[11px] tracking-wide text-[#7a7a7a]">{d}</div>
             ))}
             {cells.map((d, i) =>
               d === null ? (
@@ -100,7 +100,7 @@ function Arrow({ dir, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex h-7 w-7 items-center justify-center rounded-full text-[18px] leading-none text-[#767676] transition-colors hover:bg-[#f2f2f2] hover:text-[#111]"
+      className="flex h-7 w-7 items-center justify-center rounded-full text-[18px] leading-none text-[#9a9a9a] transition-colors hover:bg-white/10 hover:text-white"
     >
       {dir}
     </button>
@@ -113,9 +113,9 @@ function dayClass(view, d, selected, today) {
     today.getFullYear() === view.y && today.getMonth() === view.m && today.getDate() === d;
   const base =
     'flex h-8 w-8 items-center justify-center rounded-full text-[13px] transition-all duration-150';
-  if (isSel) return `${base} bg-[#111] text-white`;
-  if (isToday) return `${base} bg-[#f4f4f4] text-[#111] hover:bg-[#ebebeb]`;
-  return `${base} text-[#333] hover:bg-[#f2f2f2]`;
+  if (isSel) return `${base} bg-white text-[#050506]`;
+  if (isToday) return `${base} bg-white/10 text-white hover:bg-white/[0.16]`;
+  return `${base} text-[#d0d0d0] hover:bg-white/10`;
 }
 
 function parseYMD(v) {

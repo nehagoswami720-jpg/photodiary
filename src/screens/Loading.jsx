@@ -5,14 +5,14 @@
 export default function Loading({ percent, status }) {
   return (
     <div className="flex w-[620px] max-w-[90vw] flex-col gap-2">
-      {/* progress bar (#d9d9d9 track, #080808 fill; slightly slimmer than Figma's 12px) */}
-      <div className="h-[8px] w-full bg-[#d9d9d9]">
-        <div className="h-full bg-[#080808]" style={{ width: `${percent}%` }} />
+      {/* progress bar (dark track, light fill; slightly slimmer than Figma's 12px) */}
+      <div className="h-[8px] w-full bg-[#2a2a2c]">
+        <div className="h-full bg-[#f2f2f2]" style={{ width: `${percent}%` }} />
       </div>
 
       {/* status message (left) + percentage (right) */}
       <div
-        className="flex items-center justify-between py-1 text-[18px] leading-[1.7] tracking-[-0.6px] text-[#767676]"
+        className="flex items-center justify-between py-1 text-[18px] leading-[1.7] tracking-[-0.6px] text-[#8f8f8f]"
         style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', fontWeight: 300 }}
       >
         <span key={status} className="status-line inline-flex items-baseline px-[1px]">

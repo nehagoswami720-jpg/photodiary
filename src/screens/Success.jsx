@@ -2,7 +2,7 @@
 // bar + labels position) so the loading -> success swap doesn't move the bar.
 // The confetti is an absolute overlay (no layout space), and the bar eases from
 // black -> green in place. Plays once; no ongoing interaction.
-const COLORS = ['#028300', '#1a1a1a', '#767676', '#c99a3b', '#6b8cce'];
+const COLORS = ['#2fbf5f', '#ffffff', '#b5b5b5', '#e0b95a', '#7ea2f0'];
 const PIECES = Array.from({ length: 20 }, (_, i) => ({
   left: Math.round(5 + Math.random() * 90), // spread along the bar
   color: COLORS[i % COLORS.length],
@@ -36,7 +36,7 @@ export default function Success() {
       {/* bar eases black -> green in place (same position as the loading bar) */}
       <div className="success-bar h-[8px] w-full" />
       <div
-        className="flex items-center justify-between py-1 text-[18px] leading-[1.7] tracking-[-0.6px] text-[#767676]"
+        className="flex items-center justify-between py-1 text-[18px] leading-[1.7] tracking-[-0.6px] text-[#8f8f8f]"
         style={{ fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', fontWeight: 300 }}
       >
         <span>upload complete</span>

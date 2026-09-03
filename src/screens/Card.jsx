@@ -41,7 +41,7 @@ export default function Card({ place, capturedAt, imageUrl, showTime = true }) {
         <div className="flex min-w-0 flex-col gap-1">
           {place && (
             <p
-              className="break-words text-[20px] leading-[1.5] tracking-[-0.6px] text-[#2f2f2f]"
+              className="break-words text-[20px] leading-[1.5] tracking-[-0.6px] text-[#f0f0f0]"
               style={{ fontFamily: '"Mulish", sans-serif', fontWeight: 500 }}
             >
               {place}
@@ -49,7 +49,7 @@ export default function Card({ place, capturedAt, imageUrl, showTime = true }) {
           )}
           {capturedAt && (
             <p
-              className="break-words text-[16px] italic leading-[1.4] tracking-[-0.48px] text-[#959595]"
+              className="break-words text-[16px] italic leading-[1.4] tracking-[-0.48px] text-[#9a9a9a]"
               style={{ fontFamily: '"Newsreader", serif', fontWeight: 300 }}
             >
               {formatDate(capturedAt)}
@@ -58,7 +58,7 @@ export default function Card({ place, capturedAt, imageUrl, showTime = true }) {
         </div>
         {capturedAt && showTime && (
           <p
-            className="shrink-0 whitespace-nowrap text-[16px] leading-[1.5] tracking-[-0.48px] text-[#959595]"
+            className="shrink-0 whitespace-nowrap text-[16px] leading-[1.5] tracking-[-0.48px] text-[#9a9a9a]"
             style={{ fontFamily: '"Newsreader", serif', fontWeight: 300 }}
           >
             {formatTime(capturedAt)}

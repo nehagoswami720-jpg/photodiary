@@ -17,13 +17,13 @@ export default function ManualIntro({ imageUrl, onAddDetails, onSkip }) {
         />
         <div className="flex flex-col items-center gap-2 text-center">
           <p
-            className="text-[24px] leading-[1.3] tracking-[-1.2px] text-[#333]"
+            className="text-[24px] leading-[1.3] tracking-[-1.2px] text-[#eaeaea]"
             style={{ fontFamily: HELVETICA, fontWeight: 400 }}
           >
             This moment came without its story.
           </p>
           <p
-            className="max-w-[340px] text-[15px] leading-[1.3] tracking-[0.15px] text-[#595959]"
+            className="max-w-[340px] text-[15px] leading-[1.3] tracking-[0.15px] text-[#9a9a9a]"
             style={{ fontFamily: HELVETICA, fontWeight: 300 }}
           >
             Some photos don&apos;t remember where or when they were taken. You can add it, if you
@@ -36,7 +36,7 @@ export default function ManualIntro({ imageUrl, onAddDetails, onSkip }) {
         <button
           type="button"
           onClick={onAddDetails}
-          className="cursor-pointer whitespace-nowrap bg-[#111] px-[22px] py-[13px] text-[18px] tracking-[-0.9px] text-white"
+          className="cursor-pointer whitespace-nowrap bg-white px-[22px] py-[13px] text-[18px] tracking-[-0.9px] text-[#050506] transition-colors hover:bg-[#e6e6e6]"
           style={{ fontFamily: HELVETICA, fontWeight: 400 }}
         >
           Add the details
@@ -44,7 +44,7 @@ export default function ManualIntro({ imageUrl, onAddDetails, onSkip }) {
         <button
           type="button"
           onClick={onSkip}
-          className="cursor-pointer text-[15px] tracking-[-0.75px] text-[#1c1c1c] underline"
+          className="cursor-pointer text-[15px] tracking-[-0.75px] text-[#9a9a9a] underline transition-colors hover:text-white"
           style={{ fontFamily: HELVETICA, fontWeight: 400 }}
         >
           Skip

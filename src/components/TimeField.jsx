@@ -46,17 +46,17 @@ export default function TimeField({ value, onChange }) {
         type="button"
         onClick={toggle}
         className={`flex w-full items-center gap-2.5 rounded-[12px] px-4 py-2.5 text-left text-[15px] transition-colors ${
-          open ? 'bg-[#ececeb]' : 'bg-[#f3f3f2] hover:bg-[#ececeb]'
+          open ? 'bg-white/[0.1]' : 'bg-white/[0.06] hover:bg-white/[0.1]'
         }`}
       >
         <span className="text-[#8a8a8a]"><ClockIcon /></span>
-        <span className={display ? 'text-[#333]' : 'text-[#8a8a8a]'}>{display || 'Add a time'}</span>
-        <span className="ml-auto text-[#aaa]"><Caret open={open} /></span>
+        <span className={display ? 'text-[#eaeaea]' : 'text-[#8a8a8a]'}>{display || 'Add a time'}</span>
+        <span className="ml-auto text-[#8a8a8a]"><Caret open={open} /></span>
       </button>
 
       {open && (
         <div
-          className={`picker-pop absolute left-0 z-20 flex w-[220px] gap-1 rounded-xl border border-[#eee] bg-white p-2 shadow-[0_12px_40px_rgba(0,0,0,0.12)] ${
+          className={`picker-pop absolute left-0 z-20 flex w-[220px] gap-1 rounded-xl border border-white/10 bg-[#0f0f0f] p-2 shadow-[0_18px_50px_rgba(0,0,0,0.6)] ${
             dropUp ? 'bottom-full mb-3' : 'top-full mt-3'
           }`}
         >
@@ -95,7 +95,7 @@ function Column({ items, selected, render, onPick, wide }) {
             data-selected={isSel}
             onClick={() => onPick(it)}
             className={`block w-full rounded-md py-1.5 text-center text-[14px] transition-all duration-150 ${
-              isSel ? 'bg-[#111] text-white' : 'text-[#555] hover:bg-[#f2f2f2] hover:text-[#111]'
+              isSel ? 'bg-white text-[#050506]' : 'text-[#b5b5b5] hover:bg-white/10 hover:text-white'
             }`}
           >
             {render(it)}

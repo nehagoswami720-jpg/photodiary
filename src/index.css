@@ -82,11 +82,11 @@ body {
 .status-shimmer {
   background: linear-gradient(
     90deg,
-    #767676 0%,
-    #767676 42%,
-    #3d3d3d 50%,
-    #767676 58%,
-    #767676 100%
+    #8a8a8a 0%,
+    #8a8a8a 42%,
+    #ededed 50%,
+    #8a8a8a 58%,
+    #8a8a8a 100%
   );
   background-size: 220% 100%;
   -webkit-background-clip: text;
@@ -125,8 +125,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .status-shimmer {
     animation: none;
-    color: #767676;
-    -webkit-text-fill-color: #767676;
+    color: #8a8a8a;
+    -webkit-text-fill-color: #8a8a8a;
   }
   .status-line { animation: none; }
   .status-dots .dot { animation: none; opacity: 1; }
@@ -134,12 +134,12 @@ body {
 
 /* The completed bar eases from the loading black into green, in place. */
 .success-bar {
-  background-color: #028300;
+  background-color: #2fbf5f;
   animation: bar-to-green 0.8s ease forwards;
 }
 @keyframes bar-to-green {
-  from { background-color: #080808; }
-  to   { background-color: #028300; }
+  from { background-color: #eaeaea; }
+  to   { background-color: #2fbf5f; }
 }
 @media (prefers-reduced-motion: reduce) {
   .success-bar { animation: none; }
@@ -184,12 +184,12 @@ body {
 
 /* The bar eases from the loading black into red when an error lands. */
 .error-fill {
-  background-color: #de0000;
+  background-color: #ff4d4d;
   animation: fill-to-red 0.5s ease forwards;
 }
 @keyframes fill-to-red {
-  from { background-color: #080808; }
-  to   { background-color: #de0000; }
+  from { background-color: #eaeaea; }
+  to   { background-color: #ff4d4d; }
 }
 .error-btn {
   animation: btn-up 0.5s cubic-bezier(0.16, 0.84, 0.3, 1) 0.15s both;
