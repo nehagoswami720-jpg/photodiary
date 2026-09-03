@@ -158,6 +158,20 @@ body {
   .picker-pop { animation: none; }
 }
 
+/* Calendar month change — the grid slides in from the side it came from. */
+@keyframes month-from-right { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes month-from-left  { from { opacity: 0; transform: translateX(-14px); } to { opacity: 1; transform: translateX(0); } }
+.month-r { animation: month-from-right 0.24s cubic-bezier(0.16, 0.84, 0.3, 1) both; }
+.month-l { animation: month-from-left 0.24s cubic-bezier(0.16, 0.84, 0.3, 1) both; }
+
+/* A gentle pop when a day / time value is selected. */
+@keyframes pick-pop { 0% { transform: scale(0.9); } 55% { transform: scale(1.06); } 100% { transform: scale(1); } }
+.pick-pop { display: inline-block; animation: pick-pop 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .month-r, .month-l, .pick-pop { animation: none; }
+}
+
 /* The hero card fades and rises gently into place. */
 .card-in {
   animation: card-in 0.6s cubic-bezier(0.16, 0.84, 0.3, 1) both;

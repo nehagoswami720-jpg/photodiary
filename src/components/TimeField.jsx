@@ -50,7 +50,7 @@ export default function TimeField({ value, onChange }) {
         }`}
       >
         <span className="text-[#8a8a8a]"><ClockIcon /></span>
-        <span className={display ? 'text-[#eaeaea]' : 'text-[#8a8a8a]'}>{display || 'Add a time'}</span>
+        <span key={display || 'none'} className={display ? 'pick-pop text-[#eaeaea]' : 'text-[#8a8a8a]'}>{display || 'Add a time'}</span>
         <span className="ml-auto text-[#8a8a8a]"><Caret open={open} /></span>
       </button>
 
@@ -94,8 +94,8 @@ function Column({ items, selected, render, onPick, wide }) {
             type="button"
             data-selected={isSel}
             onClick={() => onPick(it)}
-            className={`block w-full rounded-md py-1.5 text-center text-[14px] transition-all duration-150 ${
-              isSel ? 'bg-white text-[#050506]' : 'text-[#b5b5b5] hover:bg-white/10 hover:text-white'
+            className={`block w-full rounded-md py-1.5 text-center text-[14px] transition-all duration-150 hover:scale-[1.06] active:scale-95 ${
+              isSel ? 'scale-[1.03] bg-white text-[#050506]' : 'text-[#b5b5b5] hover:bg-white/10 hover:text-white'
             }`}
           >
             {render(it)}

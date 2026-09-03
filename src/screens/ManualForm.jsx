@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import DateField from '../components/DateField.jsx';
 import TimeField from '../components/TimeField.jsx';
-import { PinIcon } from '../components/icons.jsx';
+import PlaceField from '../components/PlaceField.jsx';
 
 // Manual entry — screen 2: the form. The user adds the place / date / time the
 // photo didn't carry, then Submit builds the card. All fields optional — only
@@ -10,7 +10,7 @@ import { PinIcon } from '../components/icons.jsx';
 // are soft-filled pills with line icons (place / date / time).
 const HELVETICA = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 
-export default function ManualForm({ imageUrl, onSubmit }) {
+export default function ManualForm({ imageUrl, onSubmit, places = [] }) {
   const [place, setPlace] = useState('');
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
@@ -30,16 +30,7 @@ export default function ManualForm({ imageUrl, onSubmit }) {
       />
 
       <div className="flex w-[min(430px,88vw)] flex-col gap-3" style={{ fontFamily: HELVETICA, fontWeight: 400 }}>
-        <label className="flex items-center gap-2.5 rounded-[12px] bg-white/[0.06] px-4 py-2.5 text-[15px] transition-colors focus-within:bg-white/[0.1]">
-          <span className="text-[#8a8a8a]"><PinIcon /></span>
-          <input
-            type="text"
-            value={place}
-            onChange={(e) => setPlace(e.target.value)}
-            placeholder="Add a place"
-            className="w-full bg-transparent text-[#eaeaea] outline-none placeholder:text-[#8a8a8a]"
-          />
-        </label>
+        <PlaceField value={place} onChange={setPlace} suggestions={places} />
         <div className="grid grid-cols-2 gap-3">
           <DateField value={date} onChange={setDate} />
           <TimeField value={time} onChange={setTime} />

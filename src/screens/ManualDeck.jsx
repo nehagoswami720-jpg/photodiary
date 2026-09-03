@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import DateField from '../components/DateField.jsx';
 import TimeField from '../components/TimeField.jsx';
-import { PinIcon } from '../components/icons.jsx';
+import PlaceField from '../components/PlaceField.jsx';
 
 // The "came without its story" deck — shown after a multi-photo upload for the
 // photos whose place couldn't be detected. Step through them with ‹ › arrows,
@@ -14,7 +14,7 @@ const pad = (n) => String(n).padStart(2, '0');
 const toYMD = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const toHM = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
 
-export default function ManualDeck({ items, onDone, onCancel }) {
+export default function ManualDeck({ items, onDone, onCancel, places = [] }) {
   const [i, setI] = useState(0);
   // one {place,date,time} per photo — date/time pre-filled from EXIF if present
   const [values, setValues] = useState(() =>
@@ -58,16 +58,7 @@ export default function ManualDeck({ items, onDone, onCancel }) {
       </div>
 
       <div className="flex w-[min(430px,88vw)] flex-col gap-3" style={{ fontFamily: HELVETICA, fontWeight: 400 }}>
-        <label className="flex items-center gap-2.5 rounded-[12px] bg-white/[0.06] px-4 py-2.5 text-[15px] transition-colors focus-within:bg-white/[0.1]">
-          <span className="text-[#8a8a8a]"><PinIcon /></span>
-          <input
-            type="text"
-            value={v.place}
-            onChange={(e) => set({ place: e.target.value })}
-            placeholder="Add a place"
-            className="w-full bg-transparent text-[#eaeaea] outline-none placeholder:text-[#8a8a8a]"
-          />
-        </label>
+        <PlaceField value={v.place} onChange={(place) => set({ place })} suggestions={places} />
         <div className="grid grid-cols-2 gap-3">
           {/* keyed by index so the pickers reset to the current photo's values */}
           <DateField key={`d${i}`} value={v.date} onChange={(date) => set({ date })} />

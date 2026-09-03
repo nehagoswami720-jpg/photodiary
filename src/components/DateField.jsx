@@ -15,6 +15,7 @@ const toYMD = (y, m, d) => `${y}-${pad(m + 1)}-${pad(d)}`;
 export default function DateField({ value, onChange }) {
   const [open, setOpen] = useState(false);
   const [dropUp, setDropUp] = useState(false);
+  const [dir, setDir] = useState(1); // month-change direction (1 = next, -1 = prev)
   const rootRef = useRef(null);
   const selected = value ? parseYMD(value) : null;
   const [view, setView] = useState(() => (selected ? { y: selected.y, m: selected.m } : nowYM()));
@@ -51,7 +52,7 @@ export default function DateField({ value, onChange }) {
         }`}
       >
         <span className="text-[#8a8a8a]"><CalendarIcon /></span>
-        <span className={display ? 'text-[#eaeaea]' : 'text-[#8a8a8a]'}>{display || 'Add a date'}</span>
+        <span key={display || 'none'} className={display ? 'pick-pop text-[#eaeaea]' : 'text-[#8a8a8a]'}>{display || 'Add a date'}</span>
         <span className="ml-auto text-[#8a8a8a]"><Caret open={open} /></span>
       </button>
 
@@ -62,11 +63,11 @@ export default function DateField({ value, onChange }) {
           }`}
         >
           <div className="mb-2 flex items-center justify-between">
-            <Arrow dir="‹" onClick={() => setView(step(view, -1))} />
+            <Arrow dir="‹" onClick={() => { setDir(-1); setView(step(view, -1)); }} />
             <span className="text-[14px] text-[#eaeaea]">{MONTHS[view.m]} {view.y}</span>
-            <Arrow dir="›" onClick={() => setView(step(view, 1))} />
+            <Arrow dir="›" onClick={() => { setDir(1); setView(step(view, 1)); }} />
           </div>
-          <div className="grid grid-cols-7 gap-y-1 text-center">
+          <div key={`${view.y}-${view.m}`} className={`grid grid-cols-7 gap-y-1 text-center ${dir >= 0 ? 'month-r' : 'month-l'}`}>
             {DOW.map((d, i) => (
               <div key={i} className="pb-1 text-[11px] tracking-wide text-[#7a7a7a]">{d}</div>
             ))}
@@ -112,7 +113,7 @@ function dayClass(view, d, selected, today) {
   const isToday =
     today.getFullYear() === view.y && today.getMonth() === view.m && today.getDate() === d;
   const base =
-    'flex h-8 w-8 items-center justify-center rounded-full text-[13px] transition-all duration-150';
+    'flex h-8 w-8 items-center justify-center rounded-full text-[13px] transition-all duration-150 hover:scale-110 active:scale-95';
   if (isSel) return `${base} bg-white text-[#050506]`;
   if (isToday) return `${base} bg-white/10 text-white hover:bg-white/[0.16]`;
   return `${base} text-[#d0d0d0] hover:bg-white/10`;

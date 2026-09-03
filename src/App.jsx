@@ -102,28 +102,65 @@ export default function App() {
   const [deck, setDeck] = useState([]); // undetected photos from a batch, awaiting manual details
   const [activeAlbumId, setActiveAlbumId] = useState(null); // null = album shelf; else the open album's canvas
   const [coverMap, setCoverMap] = useState({}); // albumId -> chosen cover entry id (user-picked)
-  const activeAlbumRef = useRef(null); // mirror of activeAlbumId, for the history helpers
-  useEffect(() => {
-    activeAlbumRef.current = activeAlbumId;
-  }, [activeAlbumId]);
+  // --- Chrome Back works on EVERY page ---
+  // "Home" is the album shelf (or the empty drop zone). Leaving home for any other
+  // page — an album canvas, the upload flow, or manual entry — drops a single
+  // history "trap". Pressing the browser Back button from anywhere then returns to
+  // home (discarding any in-flight upload). Programmatic returns home remove the
+  // trap so no stray Back press is left behind.
+  const skipPopRef = useRef(false); // true = the next popstate is our own history.back()
 
-  // Browser Back navigates the album canvas → shelf. Opening an album pushes a
-  // history entry; the browser Back button (or a programmatic returnToShelf) pops
-  // it, and popstate drops us back to the shelf.
+  // Reset all transient upload/album state back to the home baseline.
+  function homeReset() {
+    runIdRef.current++; // cancel any in-flight run
+    setBusy(false);
+    setPercent(0);
+    pendingRef.current = null;
+    setResult((r) => {
+      if (r?.imageUrl) URL.revokeObjectURL(r.imageUrl);
+      return null;
+    });
+    setDeck((d) => {
+      d.forEach((it) => it.imageUrl && URL.revokeObjectURL(it.imageUrl));
+      return [];
+    });
+    batchRef.current = [];
+    setActiveAlbumId(null);
+  }
+
   useEffect(() => {
     function onPop() {
-      setActiveAlbumId(null);
+      if (skipPopRef.current) {
+        skipPopRef.current = false; // our own back() — state was already reset
+        return;
+      }
+      // user pressed Back from a non-home page → return home
+      homeReset();
+      getAllEntries()
+        .then((all) => setScreen(all.length ? 'gallery' : 'empty'))
+        .catch(() => setScreen('empty'));
     }
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function trap() {
+    if (!window.history.state?.appTrap) window.history.pushState({ appTrap: true }, '');
+  }
+  function untrap() {
+    if (window.history.state?.appTrap) {
+      skipPopRef.current = true;
+      window.history.back(); // remove the trap entry without re-running the reset
+    }
+  }
   function openAlbum(id) {
-    window.history.pushState({ albumId: id }, '');
+    trap();
     setActiveAlbumId(id);
   }
   function returnToShelf() {
-    if (activeAlbumRef.current != null) window.history.back(); // pop the album entry → popstate → shelf
-    else setActiveAlbumId(null);
+    setActiveAlbumId(null);
+    untrap();
   }
 
   // Albums for the home shelf: an "All moments" cover (opens the full canvas) plus
@@ -136,6 +173,13 @@ export default function App() {
       cover: a.moments.find((m) => m.id === coverMap[a.id]) || a.moments[0] || null,
     }));
   }, [entries, coverMap]);
+
+  // Distinct places already in the diary — offered as on-device autocomplete in
+  // manual entry (nothing typed leaves the device).
+  const knownPlaces = useMemo(
+    () => [...new Set(entries.map((e) => e.place).filter(Boolean))],
+    [entries],
+  );
 
   // On load, open the gallery of saved moments (or the drop zone if empty).
   useEffect(() => {
@@ -200,13 +244,8 @@ export default function App() {
 
   // Return to the gallery (reloading moments); the drop zone if the diary is empty.
   async function goHome() {
-    runIdRef.current++; // cancel any in-flight run
-    setBusy(false);
-    setPercent(0);
-    pendingRef.current = null;
-    if (result?.imageUrl) URL.revokeObjectURL(result.imageUrl);
-    setResult(null);
-    returnToShelf(); // land back on the album shelf
+    homeReset(); // cancel in-flight, clear result/deck, drop back to the shelf
+    untrap(); // remove the history trap so Back doesn't linger on this flow
     const all = await getAllEntries().catch(() => []);
     setEntries(all);
     setScreen(all.length ? 'gallery' : 'empty');
@@ -259,6 +298,7 @@ export default function App() {
       if (live()) setPercent(v);
     };
 
+    trap(); // Back during/after the upload flow returns home
     setScreen('loading');
     setPercent(0);
     setBusy(true); // starts the phrase loop
@@ -356,6 +396,7 @@ export default function App() {
     const runId = ++runIdRef.current;
     const live = () => runId === runIdRef.current;
 
+    trap(); // Back during/after the batch flow returns home
     setScreen('loading');
     setBusy(false); // batch drives its own "X of N" status, not the phrase loop
     setPercent(0);
@@ -513,7 +554,7 @@ export default function App() {
         {screen === 'loading' && <Loading percent={percent} status={status} />}
         {screen === 'success' && <Success />}
         {screen === 'deck' && deck.length > 0 && (
-          <ManualDeck items={deck} onDone={finishDeck} onCancel={cancelDeck} />
+          <ManualDeck items={deck} onDone={finishDeck} onCancel={cancelDeck} places={knownPlaces} />
         )}
         {screen === 'error' && <ErrorState percent={failPercent} onRetry={goHome} />}
         {/* the single hero card is now only used for the ?state=card preview
@@ -534,7 +575,7 @@ export default function App() {
           />
         )}
         {screen === 'form' && result && (
-          <ManualForm imageUrl={result.imageUrl} onSubmit={submitManual} />
+          <ManualForm imageUrl={result.imageUrl} onSubmit={submitManual} places={knownPlaces} />
         )}
       </div>
     </div>
