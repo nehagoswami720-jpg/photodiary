@@ -42,7 +42,7 @@ export default function MomentPlane({ id, url, position, depth = 0.5, focused, d
   //   brightness — nearest full-bright, furthest dimmed to ~0.6 (stable, not just fog)
   //   opacity    — nearest solid/vivid, furthest more translucent (melts into black)
   const depthScale = 0.55 + 0.45 * depth;
-  const brightness = 0.6 + 0.4 * depth;
+  const brightness = 0.6 + 0.3 * depth;
   const depthOpacity = 0.68 + 0.25 * depth;
 
   // "wind" strength (0..1) eases up while the cursor is over the photo and back

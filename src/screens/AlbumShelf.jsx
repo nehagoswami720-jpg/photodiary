@@ -230,7 +230,7 @@ export default function AlbumShelf({ albums, onOpen, onUpload }) {
       gc[1] += (target[1] - gc[1]) * 0.05;
       gc[2] += (target[2] - gc[2]) * 0.05;
       if (glowRef.current) {
-        glowRef.current.style.background = `radial-gradient(closest-side, rgba(${gc[0] | 0},${gc[1] | 0},${gc[2] | 0},0.4), transparent)`;
+        glowRef.current.style.background = `radial-gradient(closest-side, rgba(${gc[0] | 0},${gc[1] | 0},${gc[2] | 0},0.33), transparent)`;
         glowRef.current.style.transform = `translate3d(calc(-50% + ${par.current.x * 0.5}px), ${par.current.y * 0.5}px, 0)`;
       }
       raf = requestAnimationFrame(frame);
@@ -271,7 +271,7 @@ export default function AlbumShelf({ albums, onOpen, onUpload }) {
       <div
         ref={glowRef}
         className="pointer-events-none absolute left-1/2 z-0"
-        style={{ top: '14%', width: 'min(1100px, 78vw)', height: '620px', filter: 'blur(120px)' }}
+        style={{ top: '16%', width: 'min(880px, 62vw)', height: '500px', filter: 'blur(120px)' }}
       />
 
       <div ref={rowRef} className="absolute left-1/2 top-0 z-10">
