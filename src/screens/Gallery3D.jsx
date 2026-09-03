@@ -5,6 +5,7 @@ import MomentPlane, { FOCUS_DIST, FOCUS_SCALE, PHOTO_H } from '../components/Mom
 import SparkleCursor from '../components/SparkleCursor.jsx';
 import MomentsMark from '../components/MomentsMark.jsx';
 import CanvasMenu from '../components/CanvasMenu.jsx';
+import ConfirmModal from '../components/ConfirmModal.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import { formatDate, formatTime } from '../lib/format.js';
 
@@ -45,6 +46,7 @@ export default function Gallery3D({ entries: rawEntries, onAddMoment, coverId, o
   // by the ErrorBoundary around each MomentPlane.)
   const entries = useMemo(() => rawEntries.filter((e) => e.photoBlob instanceof Blob), [rawEntries]);
   const [focusedId, setFocusedId] = useState(null);
+  const [confirmPhoto, setConfirmPhoto] = useState(false); // delete-photo confirm modal
   const vel = useRef({ x: 0, y: 0 }); // pan velocity from cursor movement
   const offset = useRef({ x: 0, y: 0 }); // current camera pan
   const last = useRef(null); // last cursor position (px)
@@ -263,34 +265,44 @@ export default function Gallery3D({ entries: rawEntries, onAddMoment, coverId, o
             </p>
           )}
 
-          {/* per-photo actions (Figma "delete photo UI" 283:466): set this moment
-              as the album cover · delete this moment */}
+          {/* per-photo actions (Figma "delete photo UI" 283:466), exact tokens:
+              "Set as album cover" (solid white) · "Delete photo" (white outline) */}
           <div className="mt-4 flex items-center gap-4" style={{ fontFamily: HELVETICA }}>
             {onSetCover && (
               <button
                 type="button"
                 onClick={() => onSetCover(focused.id)}
-                disabled={focused.id === coverId}
-                className="pointer-events-auto cursor-pointer border border-white bg-white px-4 py-2 text-[16px] leading-none tracking-[-0.8px] text-[#2c2c2c] transition-colors hover:bg-[#e6e6e6] disabled:cursor-default disabled:opacity-55"
+                className="pointer-events-auto cursor-pointer border border-white bg-white px-4 py-2 text-[16px] leading-[41px] tracking-[-0.8px] text-[#2c2c2c] transition-colors hover:bg-[#e6e6e6]"
               >
-                {focused.id === coverId ? 'Album cover ✓' : 'Set as album cover'}
+                Set as album cover
               </button>
             )}
             {onDeletePhoto && (
               <button
                 type="button"
-                onClick={() => {
-                  const id = focused.id;
-                  setFocusedId(null); // return to the live canvas
-                  onDeletePhoto(id);
-                }}
-                className="pointer-events-auto cursor-pointer border-[0.5px] border-white px-4 py-2 text-[16px] leading-none tracking-[-0.8px] text-white transition-colors hover:bg-white/10"
+                onClick={() => setConfirmPhoto(true)}
+                className="pointer-events-auto cursor-pointer border-[0.5px] border-[#fffcfc] px-4 py-2 text-[16px] leading-[41px] tracking-[-0.8px] text-white transition-colors hover:bg-white/10"
               >
                 Delete photo
               </button>
             )}
           </div>
         </div>
+      )}
+
+      {/* delete-photo confirmation (same modal as delete-album, worded for a photo) */}
+      {confirmPhoto && focused && (
+        <ConfirmModal
+          title="Are you sure you want to delete this photo?"
+          confirmLabel="Yes, delete this photo"
+          onCancel={() => setConfirmPhoto(false)}
+          onConfirm={() => {
+            const id = focused.id;
+            setConfirmPhoto(false);
+            setFocusedId(null); // return to the live canvas
+            onDeletePhoto(id);
+          }}
+        />
       )}
     </div>
   );

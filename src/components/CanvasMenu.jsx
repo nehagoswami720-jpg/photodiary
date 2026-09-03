@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import ConfirmModal from './ConfirmModal.jsx';
 
 // Top-right menu for the canvas. The trigger is the user's own icon — three uneven,
 // staggered lines that SETTLE to an even hamburger on hover and ROTATE + morph into
@@ -146,40 +147,15 @@ export default function CanvasMenu({ onUpload, onDeleteAlbum, rightInset, top })
       />
 
       {modal && (
-        <div
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/55 px-6 backdrop-blur-sm"
-          onPointerDown={(e) => {
-            if (e.target === e.currentTarget) setModal(false);
+        <ConfirmModal
+          title="Are you sure you want to delete this album?"
+          confirmLabel="Yes, delete this album"
+          onCancel={() => setModal(false)}
+          onConfirm={() => {
+            setModal(false);
+            onDeleteAlbum();
           }}
-        >
-          <div
-            className="modal-in flex max-w-[560px] flex-col items-center gap-8 bg-[#0f0f0f] px-16 py-14 text-center"
-            style={{ fontFamily: HELVETICA }}
-          >
-            <p className="text-[24px] leading-[1.35] tracking-[-1.2px] text-white">
-              Are you sure you want to delete this album?
-            </p>
-            <div className="flex items-center gap-4">
-              <button
-                type="button"
-                onClick={() => setModal(false)}
-                className="cursor-pointer border-[0.5px] border-white px-4 py-2 text-[16px] tracking-[-0.8px] text-white transition-colors hover:bg-white/10"
-              >
-                No, go back
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setModal(false);
-                  onDeleteAlbum();
-                }}
-                className="cursor-pointer border border-[#c20000] bg-[#c12424] px-4 py-2 text-[16px] tracking-[-0.8px] text-white transition-colors hover:bg-[#d62a2a]"
-              >
-                Yes, delete this album
-              </button>
-            </div>
-          </div>
-        </div>
+        />
       )}
     </>
   );
