@@ -112,7 +112,7 @@ export default function AlbumShelf({ albums, onOpen, onUpload }) {
   const colorsRef = useRef([]); // dominant [r,g,b] per album cover (read in the loop)
 
   const covers = useMemo(
-    () => albums.map((a) => (a.cover ? URL.createObjectURL(a.cover.photoBlob) : null)),
+    () => albums.map((a) => (a.cover?.photoBlob instanceof Blob ? URL.createObjectURL(a.cover.photoBlob) : null)),
     [albums],
   );
   useEffect(() => () => covers.forEach((u) => u && URL.revokeObjectURL(u)), [covers]);

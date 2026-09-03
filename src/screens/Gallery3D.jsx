@@ -5,6 +5,7 @@ import MomentPlane, { FOCUS_DIST, FOCUS_SCALE, PHOTO_H } from '../components/Mom
 import SparkleCursor from '../components/SparkleCursor.jsx';
 import MomentsMark from '../components/MomentsMark.jsx';
 import CanvasMenu from '../components/CanvasMenu.jsx';
+import ErrorBoundary from '../components/ErrorBoundary.jsx';
 import { formatDate, formatTime } from '../lib/format.js';
 
 // The 3D gallery — a dense field of memories on a gentle dome. Photos fill a
@@ -37,7 +38,12 @@ function cellJitter(gx, gy) {
   return ((h >>> 0) % 100000) / 100000;
 }
 
-export default function Gallery3D({ entries, onAddMoment, coverId, onSetCover, onDeletePhoto, onDeleteAlbum }) {
+export default function Gallery3D({ entries: rawEntries, onAddMoment, coverId, onSetCover, onDeletePhoto, onDeleteAlbum }) {
+  // Only entries with a real image blob reach the canvas — a missing/invalid blob
+  // would crash URL.createObjectURL and blank the whole screen. (Undecodable-but-
+  // valid blobs, e.g. legacy HEIC, still slip through here and are caught per-card
+  // by the ErrorBoundary around each MomentPlane.)
+  const entries = useMemo(() => rawEntries.filter((e) => e.photoBlob instanceof Blob), [rawEntries]);
   const [focusedId, setFocusedId] = useState(null);
   const vel = useRef({ x: 0, y: 0 }); // pan velocity from cursor movement
   const offset = useRef({ x: 0, y: 0 }); // current camera pan
@@ -188,18 +194,21 @@ export default function Gallery3D({ entries, onAddMoment, coverId, onSetCover, o
         {/* each photo in its own Suspense so they stream in as they decode,
             instead of the whole field blocking until every texture is ready */}
         {cards.map((c) => (
-          <Suspense key={c.id} fallback={null}>
-            <MomentPlane
-              id={c.id}
-              url={urlById.get(c.id)}
-              position={c.position}
-              depth={c.depth}
-              focused={focusedId === c.id}
-              dimmed={focusedId !== null && focusedId !== c.id}
-              focusUp={focusLayout.up}
-              onFocus={setFocusedId}
-            />
-          </Suspense>
+          // per-photo boundary: a texture that fails to decode is skipped, not fatal
+          <ErrorBoundary key={c.id} fallback={null}>
+            <Suspense fallback={null}>
+              <MomentPlane
+                id={c.id}
+                url={urlById.get(c.id)}
+                position={c.position}
+                depth={c.depth}
+                focused={focusedId === c.id}
+                dimmed={focusedId !== null && focusedId !== c.id}
+                focusUp={focusLayout.up}
+                onFocus={setFocusedId}
+              />
+            </Suspense>
+          </ErrorBoundary>
         ))}
       </Canvas>
 
