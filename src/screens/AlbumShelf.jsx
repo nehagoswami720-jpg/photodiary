@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import SparkleCursor from '../components/SparkleCursor.jsx';
 import MomentsMark from '../components/MomentsMark.jsx';
-import { PlusIcon } from '../components/icons.jsx';
 
 // The home shelf: album covers in a front-facing horizontal row. The cover nearest
 // the centre takes the spotlight — tallest & full opacity — and covers shrink and
@@ -331,21 +330,23 @@ export default function AlbumShelf({ albums, onOpen, onUpload }) {
         <MomentsMark />
       </div>
 
-      <div className="fixed inset-x-0 bottom-10 z-20 flex justify-center">
-        <label
-          className="pointer-events-auto flex cursor-pointer items-center gap-2 bg-white px-[22px] py-3 text-[18px] tracking-[-0.9px] text-[#050506] shadow-[0_6px_24px_rgba(0,0,0,0.5)] transition-colors hover:bg-[#e8e8e8]"
-          style={{ fontFamily: HELVETICA, fontWeight: 400 }}
-        >
-          <PlusIcon /> Upload a moment
-          <input
-            type="file"
-            accept="image/*,.heic,.heif"
-            multiple
-            className="hidden"
-            onChange={(e) => onUpload(e.target.files)}
-          />
-        </label>
-      </div>
+      {/* upload trigger: a plus icon in the top-right corner (same spot as the
+          canvas menu); clicking it opens the file picker → the upload flow */}
+      <label
+        aria-label="Upload a moment"
+        className="pointer-events-auto fixed right-[40px] top-[40px] z-40 flex cursor-pointer items-center justify-center p-3 text-white transition-opacity hover:opacity-70"
+      >
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        <input
+          type="file"
+          accept="image/*,.heic,.heif"
+          multiple
+          className="hidden"
+          onChange={(e) => onUpload(e.target.files)}
+        />
+      </label>
     </div>
   );
 }
