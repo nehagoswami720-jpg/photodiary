@@ -550,7 +550,7 @@ export default function App() {
       <div className="pointer-events-none fixed left-[clamp(18px,3.2vw,54px)] top-[56px] z-20">
         <MomentsMark />
       </div>
-      <div className="flex w-full flex-1 items-center justify-center py-10">
+      <div className="flex w-full flex-1 items-center justify-center py-8">
         {screen === 'empty' && <EmptyState onFiles={handleUpload} />}
         {screen === 'loading' && <Loading percent={percent} status={status} />}
         {screen === 'success' && <Success />}

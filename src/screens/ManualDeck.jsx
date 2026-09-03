@@ -30,12 +30,12 @@ export default function ManualDeck({ items, onDone, onCancel, places = [] }) {
   const set = (patch) => setValues((vs) => vs.map((x, idx) => (idx === i ? { ...x, ...patch } : x)));
 
   return (
-    <div className="card-in flex w-full max-w-[88vw] flex-col items-center gap-7">
+    <div className="card-in flex w-full max-w-[88vw] flex-col items-center gap-5">
       <img
         src={it.imageUrl}
         alt=""
         className="block h-auto w-auto object-contain"
-        style={{ maxWidth: 'min(400px, 86vw)', maxHeight: '30vh' }}
+        style={{ maxWidth: 'min(400px, 86vw)', maxHeight: '25vh' }}
       />
 
       <div className="flex flex-col items-center gap-2 text-center">
