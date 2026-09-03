@@ -10,7 +10,7 @@ import { PlusIcon } from '../components/icons.jsx';
 // wave (the snake). Hovering a cover lifts it. All DOM + CSS; one rAF loop mutates
 // transforms directly. (Design: Figma "new homepage".)
 const HELVETICA = '"Helvetica Neue", Helvetica, Arial, sans-serif';
-const BG = '#0a0a0c';
+const BG = '#050506';
 
 const COVER_W = 267; // constant cover width (keeps the 32px gaps exact)
 const GAP = 16;
@@ -333,7 +333,7 @@ export default function AlbumShelf({ albums, onOpen, onUpload }) {
 
       <div className="fixed inset-x-0 bottom-10 z-20 flex justify-center">
         <label
-          className="pointer-events-auto flex cursor-pointer items-center gap-2 bg-white px-[22px] py-3 text-[18px] tracking-[-0.9px] text-[#0a0a0c] shadow-[0_6px_24px_rgba(0,0,0,0.5)] transition-colors hover:bg-[#e8e8e8]"
+          className="pointer-events-auto flex cursor-pointer items-center gap-2 bg-white px-[22px] py-3 text-[18px] tracking-[-0.9px] text-[#050506] shadow-[0_6px_24px_rgba(0,0,0,0.5)] transition-colors hover:bg-[#e8e8e8]"
           style={{ fontFamily: HELVETICA, fontWeight: 400 }}
         >
           <PlusIcon /> Upload a moment

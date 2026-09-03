@@ -15,7 +15,7 @@ import { groupIntoAlbums } from './lib/albums.js';
 import { readPhotoData } from './lib/exif.js';
 import { buildCard } from './lib/card.js';
 import { toDisplayBlob } from './lib/heic.js';
-import { saveEntry, getAllEntries, requestPersistence, getCoverMap, setCover } from './lib/db.js';
+import { saveEntry, deleteEntries, getAllEntries, requestPersistence, getCoverMap, setCover } from './lib/db.js';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 const HELVETICA = '"Helvetica Neue", Helvetica, Arial, sans-serif';
@@ -102,6 +102,29 @@ export default function App() {
   const [deck, setDeck] = useState([]); // undetected photos from a batch, awaiting manual details
   const [activeAlbumId, setActiveAlbumId] = useState(null); // null = album shelf; else the open album's canvas
   const [coverMap, setCoverMap] = useState({}); // albumId -> chosen cover entry id (user-picked)
+  const activeAlbumRef = useRef(null); // mirror of activeAlbumId, for the history helpers
+  useEffect(() => {
+    activeAlbumRef.current = activeAlbumId;
+  }, [activeAlbumId]);
+
+  // Browser Back navigates the album canvas → shelf. Opening an album pushes a
+  // history entry; the browser Back button (or a programmatic returnToShelf) pops
+  // it, and popstate drops us back to the shelf.
+  useEffect(() => {
+    function onPop() {
+      setActiveAlbumId(null);
+    }
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+  function openAlbum(id) {
+    window.history.pushState({ albumId: id }, '');
+    setActiveAlbumId(id);
+  }
+  function returnToShelf() {
+    if (activeAlbumRef.current != null) window.history.back(); // pop the album entry → popstate → shelf
+    else setActiveAlbumId(null);
+  }
 
   // Albums for the home shelf: an "All moments" cover (opens the full canvas) plus
   // one per location (groupIntoAlbums, honest place-only grouping). Each album's
@@ -136,6 +159,45 @@ export default function App() {
     }
   }
 
+  // Permanently delete one moment (the user's own photo). Updates the diary in
+  // place; if the open album empties out, fall back to the shelf, and if the whole
+  // diary is now empty, show the drop zone.
+  async function deletePhoto(id) {
+    try {
+      await deleteEntries([id]);
+    } catch {
+      /* keep working even if the delete fails to persist */
+    }
+    const next = entries.filter((e) => e.id !== id);
+    setEntries(next);
+    if (!next.length) {
+      returnToShelf();
+      setScreen('empty');
+    } else if (activeAlbumId && activeAlbumId !== '__all__') {
+      // a location album disappears once its last photo is gone
+      const stillExists = groupIntoAlbums(next).some((a) => a.id === activeAlbumId);
+      if (!stillExists) returnToShelf();
+    }
+  }
+
+  // Permanently delete a whole album (every photo in that place). Always returns
+  // to the shelf afterwards.
+  async function deleteAlbum(albumId) {
+    const album = albums.find((a) => a.id === albumId);
+    if (!album) return;
+    const ids = album.moments.map((m) => m.id);
+    try {
+      await deleteEntries(ids);
+    } catch {
+      /* keep working even if the delete fails to persist */
+    }
+    const gone = new Set(ids);
+    const next = entries.filter((e) => !gone.has(e.id));
+    setEntries(next);
+    returnToShelf();
+    if (!next.length) setScreen('empty');
+  }
+
   // Return to the gallery (reloading moments); the drop zone if the diary is empty.
   async function goHome() {
     runIdRef.current++; // cancel any in-flight run
@@ -144,7 +206,7 @@ export default function App() {
     pendingRef.current = null;
     if (result?.imageUrl) URL.revokeObjectURL(result.imageUrl);
     setResult(null);
-    setActiveAlbumId(null); // land back on the album shelf
+    returnToShelf(); // land back on the album shelf
     const all = await getAllEntries().catch(() => []);
     setEntries(all);
     setScreen(all.length ? 'gallery' : 'empty');
@@ -426,17 +488,17 @@ export default function App() {
   // filtered to that album's moments (dark scene, its own wordmark).
   if (screen === 'gallery') {
     if (activeAlbumId == null) {
-      return <AlbumShelf albums={albums} onOpen={setActiveAlbumId} onUpload={handleUpload} />;
+      return <AlbumShelf albums={albums} onOpen={openAlbum} onUpload={handleUpload} />;
     }
     const album = albums.find((a) => a.id === activeAlbumId) || albums[0];
     return (
       <Gallery3D
         entries={album.moments}
         onAddMoment={handleUpload}
-        onBack={() => setActiveAlbumId(null)}
-        albumTitle={album.place ?? album.title}
         coverId={coverMap[album.id] ?? album.moments[0]?.id}
         onSetCover={(entryId) => chooseCover(album.id, entryId)}
+        onDeletePhoto={deletePhoto}
+        onDeleteAlbum={album.id === '__all__' ? null : () => deleteAlbum(album.id)}
       />
     );
   }

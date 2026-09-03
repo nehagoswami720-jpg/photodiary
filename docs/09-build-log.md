@@ -75,3 +75,49 @@ there is no unified system yet:
 **v2 task:** define one type scale + spacing scale + a shared button/token set,
 then reconcile every screen to it. Deliberately deferred — better done once all
 screens exist and can be seen together than reconciled mid-build.
+
+## UI redesign → merged to `main` (the "museum of memories")
+
+The `ui-redesign` branch (a 2D→3D reimagining) is now merged into `main` — one
+website. Everything below still honors the two principles: nothing invented
+(albums are pure grouping on the recorded `place`; the card shows only recorded
+data), and photos never leave the device (IndexedDB only).
+
+### What shipped
+- **3D gallery canvas** (`screens/Gallery3D.jsx` + `components/MomentPlane.jsx`,
+  React Three Fiber): a dark near-black field of photos on a shallow dome, grown
+  center-outward as moments are added; cursor pans the field; click a photo to
+  spotlight it (others dim, caption of place · date · time appears below).
+- **Album shelf as home** (`screens/AlbumShelf.jsx`): a front-facing horizontal
+  spotlight carousel — center cover tallest & brightest, sides shrink/dim; endless
+  scroll with inertia + snap, velocity wave, ambient color glow, cursor parallax,
+  staggered entrance, idle Ken Burns, per-cover typewriter index. Click a cover →
+  opens that album in the 3D canvas.
+- **Multi-upload**: >1 photo runs a batch flow (combined progress; detected held,
+  undetected → `ManualDeck` with ‹ › arrows); atomic save at the end.
+- **Delete** (`lib/db.js` `deleteEntries`): delete one photo, or a whole album
+  (every photo in that place), both permanent (no trash) so both are guarded by a
+  confirm. Deleting an album's cover falls back to the next photo; emptying an
+  album returns to the shelf.
+- **Canvas menu** (`components/CanvasMenu.jsx`): a top-right custom icon (three
+  uneven staggered lines that settle-to-even on hover and rotate + morph into an X
+  on open) opens a dropdown — "Upload a moment" and "Delete album" (staggered
+  entrance, hover dot). "Delete album" → confirm modal (No → canvas · Yes → shelf).
+- **Browser Back navigation**: opening an album pushes a history entry, so Chrome's
+  Back button returns to the shelf (replaced the on-screen breadcrumb). See `App.jsx`
+  `openAlbum` / `returnToShelf` / the `popstate` listener.
+- Shared near-black background darkened to `#050506`; app-wide `overscroll-behavior:
+  none` to block the macOS two-finger swipe-back over the horizontal shelf.
+
+### Design source
+Figma frames "new homepage" / "new homepage- hover interaction" (shelf), "menu UI"
+(262:385) and "delete modal" (265:413) — menu item + modal tokens are exact; the
+custom menu icon geometry is taken from the frame (278:450).
+
+### Still open (post-merge fine-tuning)
+- Per-photo actions (set as cover / delete) in the canvas — UI to be designed; the
+  handlers (`onSetCover`, `onDeletePhoto`) are wired and ready.
+- The 2D upload / loading / manual-entry screens are still light-themed (a brief
+  white flash on upload) — reconcile to the dark theme.
+- A unified design-system / consistency pass across every screen (the v2 task above,
+  now spanning the redesigned screens too).

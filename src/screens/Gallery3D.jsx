@@ -4,7 +4,7 @@ import { easing } from 'maath';
 import MomentPlane, { FOCUS_DIST, FOCUS_SCALE, PHOTO_H } from '../components/MomentPlane.jsx';
 import SparkleCursor from '../components/SparkleCursor.jsx';
 import MomentsMark from '../components/MomentsMark.jsx';
-import { PlusIcon } from '../components/icons.jsx';
+import CanvasMenu from '../components/CanvasMenu.jsx';
 import { formatDate, formatTime } from '../lib/format.js';
 
 // The 3D gallery — a dense field of memories on a gentle dome. Photos fill a
@@ -14,7 +14,7 @@ import { formatDate, formatTime } from '../lib/format.js';
 // cursor stops and rubber-bands at the edges (bounded — no infinite void).
 // "Upload a moment" unchanged.
 const HELVETICA = '"Helvetica Neue", Helvetica, Arial, sans-serif';
-const BG = '#0a0a0c'; // near-black: translucency & atmospheric fade read as depth, not wash
+const BG = '#050506'; // near-black: translucency & atmospheric fade read as depth, not wash
 const DENSE_CELL = 1.6; // tightest spacing — smaller than a photo, so they overlap
                          // (the Z-depth scatter turns that overlap into layered depth)
 const DEPTH = 3.6; // how far photos scatter toward/away from the camera in Z — wider
@@ -37,7 +37,7 @@ function cellJitter(gx, gy) {
   return ((h >>> 0) % 100000) / 100000;
 }
 
-export default function Gallery3D({ entries, onAddMoment, onBack, albumTitle, coverId, onSetCover }) {
+export default function Gallery3D({ entries, onAddMoment, coverId, onSetCover, onDeletePhoto, onDeleteAlbum }) {
   const [focusedId, setFocusedId] = useState(null);
   const vel = useRef({ x: 0, y: 0 }); // pan velocity from cursor movement
   const offset = useRef({ x: 0, y: 0 }); // current camera pan
@@ -205,35 +205,26 @@ export default function Gallery3D({ entries, onAddMoment, onBack, albumTitle, co
 
       {/* soft dark boundaries on all four sides (fade to the near-black bg) */}
       <div className="pointer-events-none fixed inset-0 z-10">
-        <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-[#0a0a0c] via-[#0a0a0c]/85 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-[#0a0a0c] to-transparent" />
-        <div className="absolute inset-y-0 left-0 w-36 bg-gradient-to-r from-[#0a0a0c] to-transparent" />
-        <div className="absolute inset-y-0 right-0 w-36 bg-gradient-to-l from-[#0a0a0c] to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-[#050506] via-[#050506]/85 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-[#050506] to-transparent" />
+        <div className="absolute inset-y-0 left-0 w-36 bg-gradient-to-r from-[#050506] to-transparent" />
+        <div className="absolute inset-y-0 right-0 w-36 bg-gradient-to-l from-[#050506] to-transparent" />
       </div>
 
       <SparkleCursor />
 
-      {/* back to the album shelf (only when opened from an album) */}
-      {onBack && (
-        <div className="fixed left-7 top-8 z-30 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            className="pointer-events-auto flex cursor-pointer items-center gap-1.5 text-[15px] tracking-[-0.3px] text-white/70 transition-colors hover:text-white"
-            style={{ fontFamily: HELVETICA, fontWeight: 400 }}
-          >
-            <span className="text-[19px] leading-none">‹</span> Albums
-          </button>
-          {albumTitle && (
-            <span className="text-[14px] text-white/35" style={{ fontFamily: HELVETICA }}>
-              / {albumTitle}
-            </span>
-          )}
-        </div>
-      )}
+      {/* top-right menu (custom icon → Upload a moment · Delete album), aligned
+          with the "moments" wordmark on the left */}
+      <CanvasMenu
+        onUpload={onAddMoment}
+        onDeleteAlbum={onDeleteAlbum}
+        rightInset="40px"
+        top="40px"
+      />
 
-      <div ref={wordmarkRef} className="pointer-events-none fixed inset-x-0 top-0 z-20 flex flex-col items-center pt-12">
-        <MomentsMark centered />
+      {/* wordmark: left-aligned, top-left (browser Back returns to the shelf) */}
+      <div ref={wordmarkRef} className="pointer-events-none fixed left-7 top-[44px] z-20">
+        <MomentsMark />
       </div>
 
       {/* caption for the focused moment — sits BELOW the spotlit photo, in the
@@ -262,37 +253,12 @@ export default function Gallery3D({ entries, onAddMoment, onBack, albumTitle, co
               {focused.showTime ? `  ·  ${formatTime(focused.capturedAt)}` : ''}
             </p>
           )}
-          {/* make this moment the album's cover (persisted) */}
-          {onSetCover &&
-            (focused.id === coverId ? (
-              <span
-                className="mt-3 text-[11px] uppercase tracking-[0.22em] text-white/40"
-                style={{ fontFamily: HELVETICA }}
-              >
-                ✓ Album cover
-              </span>
-            ) : (
-              <button
-                type="button"
-                onClick={() => onSetCover(focused.id)}
-                className="pointer-events-auto mt-3 border border-white/25 px-4 py-[7px] text-[11px] uppercase tracking-[0.22em] text-white/80 transition-colors hover:border-white/60 hover:text-white"
-                style={{ fontFamily: HELVETICA }}
-              >
-                Set as cover
-              </button>
-            ))}
         </div>
       )}
 
-      <div className="fixed inset-x-0 bottom-10 z-20 flex justify-center">
-        <label
-          className="pointer-events-auto flex cursor-pointer items-center gap-2 bg-white px-[22px] py-3 text-[18px] tracking-[-0.9px] text-[#0a0a0c] shadow-[0_6px_24px_rgba(0,0,0,0.5)] transition-colors hover:bg-[#e8e8e8]"
-          style={{ fontFamily: HELVETICA, fontWeight: 400 }}
-        >
-          <PlusIcon /> Upload a moment
-          <input type="file" accept="image/*,.heic,.heif" multiple className="hidden" onChange={(e) => onAddMoment(e.target.files)} />
-        </label>
-      </div>
+      {/* NOTE: per-photo actions (set as cover / delete) — UI to be designed.
+          Handlers ready: onSetCover(id), onDeletePhoto(id) (+ clear focus after
+          delete so the canvas resumes). coverId marks the current cover. */}
     </div>
   );
 }

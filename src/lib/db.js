@@ -38,6 +38,21 @@ export async function saveEntry(entry) {
   });
 }
 
+// Permanently delete one or more entries by id (the user's own photos).
+export async function deleteEntries(ids) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    const store = tx.objectStore(STORE);
+    for (const id of ids) store.delete(id);
+    tx.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
 // The most recently added entry (or null).
 export async function getLatestEntry() {
   const db = await openDB();

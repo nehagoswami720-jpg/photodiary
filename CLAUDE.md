@@ -78,6 +78,25 @@ chat-agreed — viewport scale-down + top-pinned title (`D15`), Helvetica stack
 from the real flow (`D19`). Deployed at photodiary-eight.vercel.app
 (`vercel --prod --yes`).
 
+## UI redesign — MERGED to `main` (2026-09-02)
+
+The 2D→3D "museum of memories" redesign is merged into `main` — one website (no
+more `ui-redesign` fork for daily work). Both principles intact (albums are pure
+grouping on recorded `place`; photos stay on-device). Shipped: 3D gallery canvas
+(`Gallery3D` + `MomentPlane`), album shelf home (`AlbumShelf`), multi-upload
+(`ManualDeck`), delete photo/album (`db.deleteEntries`, both confirm-guarded),
+canvas menu (`CanvasMenu` — custom uneven-line icon that settles on hover +
+rotate/morph-to-X on open; dropdown with staggered entrance + hover dot; delete
+modal), browser-Back navigation (`App` `openAlbum`/`returnToShelf`/`popstate`),
+near-black `#050506` bg. Preview alias: photodiary-3d.vercel.app (`vercel --yes`
++ `vercel alias set`). Full detail in `docs/09-build-log.md`.
+
+**Post-merge to-do (fine-tuning + consistency):**
+- Per-photo canvas actions (set as cover / delete) — UI to design; handlers ready
+  (`onSetCover`, `onDeletePhoto`).
+- Dark-theme the 2D upload/loading/manual screens (brief white flash on upload).
+- Unified design-system / consistency pass across all screens.
+
 ## Still open (don't resolve unilaterally)
 
 - HEIC path is untested (all test files were JPEG) — verify if real `.heic`

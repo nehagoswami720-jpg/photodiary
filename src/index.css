@@ -1,5 +1,25 @@
 @import "tailwindcss";
 
+/* Block the browser's two-finger swipe back/forward navigation app-wide (the
+   album shelf scrolls horizontally, and preventDefault on wheel isn't enough on
+   macOS Chrome — the gesture is tied to the document root's overscroll). */
+html,
+body {
+  overscroll-behavior: none;
+}
+
+/* Canvas menu + delete modal entrances */
+@keyframes menu-item-in {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.menu-item-in { animation: menu-item-in 340ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+.modal-in { animation: modal-in 200ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
 /* --- Calm motion for the MOMENTS wordmark --- */
 
 /* Each letter drifts up out of a soft blur and settles. */
