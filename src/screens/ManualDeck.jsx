@@ -32,10 +32,10 @@ export default function ManualDeck({ items, onDone, onCancel }) {
   return (
     <div className="card-in flex w-full max-w-[88vw] flex-col items-center gap-7">
       <div className="flex flex-col items-center gap-2 text-center">
-        <p className="text-[24px] leading-[1.3] tracking-[-0.8px] text-[#eaeaea]" style={{ fontFamily: HELVETICA, fontWeight: 300 }}>
+        <p className="text-[24px] leading-[1.3] tracking-[-0.2px] text-[#eaeaea]" style={{ fontFamily: HELVETICA, fontWeight: 300 }}>
           This moment came without its story.
         </p>
-        <p className="max-w-[360px] text-[15px] leading-[1.3] tracking-[0.15px] text-[#9a9a9a]" style={{ fontFamily: HELVETICA, fontWeight: 400 }}>
+        <p className="max-w-[360px] text-[15px] leading-[1.3] tracking-[0.15px] text-white" style={{ fontFamily: HELVETICA, fontWeight: 300 }}>
           A few photos don&apos;t remember where or when they were taken. Add what you like — step
           through them below.
         </p>
@@ -87,7 +87,7 @@ export default function ManualDeck({ items, onDone, onCancel }) {
         <button
           type="button"
           onClick={onCancel}
-          className="cursor-pointer text-[15px] tracking-[-0.75px] text-white underline transition-opacity hover:opacity-80"
+          className="cursor-pointer text-[15px] tracking-[-0.2px] text-white transition-opacity hover:opacity-80"
           style={{ fontFamily: HELVETICA, fontWeight: 300 }}
         >
           Cancel

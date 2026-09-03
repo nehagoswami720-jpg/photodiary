@@ -17,14 +17,14 @@ export default function ManualIntro({ imageUrl, onAddDetails, onSkip }) {
         />
         <div className="flex flex-col items-center gap-2 text-center">
           <p
-            className="text-[24px] leading-[1.3] tracking-[-0.8px] text-[#eaeaea]"
+            className="text-[24px] leading-[1.3] tracking-[-0.2px] text-[#eaeaea]"
             style={{ fontFamily: HELVETICA, fontWeight: 300 }}
           >
             This moment came without its story.
           </p>
           <p
-            className="max-w-[340px] text-[15px] leading-[1.3] tracking-[0.15px] text-[#9a9a9a]"
-            style={{ fontFamily: HELVETICA, fontWeight: 400 }}
+            className="max-w-[340px] text-[15px] leading-[1.3] tracking-[0.15px] text-white"
+            style={{ fontFamily: HELVETICA, fontWeight: 300 }}
           >
             Some photos don&apos;t remember where or when they were taken. You can add it, if you
             like.
@@ -44,7 +44,7 @@ export default function ManualIntro({ imageUrl, onAddDetails, onSkip }) {
         <button
           type="button"
           onClick={onSkip}
-          className="cursor-pointer text-[15px] tracking-[-0.75px] text-white underline transition-opacity hover:opacity-80"
+          className="cursor-pointer text-[15px] tracking-[-0.2px] text-white transition-opacity hover:opacity-80"
           style={{ fontFamily: HELVETICA, fontWeight: 300 }}
         >
           Skip
