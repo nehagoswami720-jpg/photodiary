@@ -427,3 +427,30 @@ values from Figma:
   the WebGL layer**, and hot-reloading a file containing `<Canvas>` leaks/loses
   the GPU context. Verify 3D changes via a **preview Vercel deploy** in a real
   browser, not the in-tool screenshots. Confirmed working by the designer.
+
+## D30 — Manual place search sends typed text to a geocoder (extends principle #2)
+
+**Date:** 2026-09-03. **Decided by:** the designer/owner, explicitly, after being
+shown the trade-off.
+
+**Context.** Manual entry's place field first offered autocomplete only from the
+user's *own* recorded places (on-device, nothing typed left the device). The owner
+asked to be able to type and find *any* place in the world. A global place index
+can't be bundled (gigabytes), so real search requires sending the typed query to an
+external geocoding service.
+
+**The crossing.** Principle #2 states GPS coordinates for place-naming are "the ONLY
+thing that may ever leave" the device. Global place search sends **typed text** out —
+a new category of data leaving the device. This was surfaced as a deliberate,
+flagged decision (not made silently) and the owner chose **full autocomplete**.
+
+**Decision.** Allow it. As the user types (min 2 chars, debounced ~320ms), the query
+text is sent to **Photon** (`photon.komoot.io`, Komoot's OpenStreetMap geocoder —
+free, no API key, CORS-enabled, purpose-built for autocomplete). The user's own
+places still match instantly with no network and are shown first; global results
+follow. Selecting a result stores only the place *string* (no coordinates), exactly
+like typing it. Photos and any other data still never leave the device.
+
+**Scope of what now leaves the device:** (1) GPS coordinates → BigDataCloud for
+reverse-geocoding a detected photo (D13); (2) typed place text → Photon for manual
+place search (this decision). Nothing else. Not photos, not the diary.

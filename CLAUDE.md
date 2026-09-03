@@ -19,9 +19,11 @@ Full plan lives in [`docs/`](./docs) — start with `docs/01-v1-spec.md` and
    a guess. Machine features (later versions) only *organize* real data; any
    inferred label must be visibly marked as a guess.
 2. **Photos never leave the device.** No backend, no accounts, no cloud.
-   On-device storage only (IndexedDB). The one exception under discussion is
-   sending GPS coordinates for place-naming — and that is the ONLY thing that
-   may ever leave. Crossing into sync/sharing (v4+) is a deliberate,
+   On-device storage only (IndexedDB). Two narrow, deliberate exceptions send
+   data out — both only to name/find a place, never photos or the diary:
+   (a) GPS coordinates → BigDataCloud to reverse-geocode a detected photo (`D13`);
+   (b) typed place text → Photon geocoder for manual place search (`D30`,
+   owner-approved). Any further crossing (sync/sharing, v4+) is a deliberate,
    flagged decision, never an accident.
 
 ## v1 scope — LOCKED
