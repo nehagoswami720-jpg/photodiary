@@ -7,6 +7,7 @@ import MomentsMark from '../components/MomentsMark.jsx';
 import CanvasMenu from '../components/CanvasMenu.jsx';
 import ConfirmModal from '../components/ConfirmModal.jsx';
 import ErrorBoundary from '../components/ErrorBoundary.jsx';
+import { photoUrl } from '../lib/photoUrls.js';
 import { formatDate, formatTime } from '../lib/format.js';
 
 // The 3D gallery — a dense field of memories on a gentle dome. Photos fill a
@@ -53,12 +54,13 @@ export default function Gallery3D({ entries: rawEntries, onAddMoment, coverId, o
   const wordmarkRef = useRef(null); // measured to place the focused photo 48px below it
   const [focusLayout, setFocusLayout] = useState({ up: 0.5, captionTop: null });
 
+  // stable per-photo URLs (shared across screens) so textures are reused, not
+  // re-created on every album open — see lib/photoUrls.js
   const urlById = useMemo(() => {
     const m = new Map();
-    for (const e of entries) m.set(e.id, URL.createObjectURL(e.photoBlob));
+    for (const e of entries) m.set(e.id, photoUrl(e));
     return m;
   }, [entries]);
-  useEffect(() => () => urlById.forEach((u) => URL.revokeObjectURL(u)), [urlById]);
 
   // Photos fill a centered, viewport-proportioned rectangle. Cells are ordered from
   // the CENTER OUTWARD in aspect-matched rectangular rings — so as moments are added

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import SparkleCursor from '../components/SparkleCursor.jsx';
 import MomentsMark from '../components/MomentsMark.jsx';
+import { photoUrl } from '../lib/photoUrls.js';
 
 // The home shelf: album covers in a front-facing horizontal row. The cover nearest
 // the centre takes the spotlight — tallest & full opacity — and covers shrink and
@@ -110,11 +111,9 @@ export default function AlbumShelf({ albums, onOpen, onUpload }) {
   const kbStart = useRef(0); // when it entered the centre
   const colorsRef = useRef([]); // dominant [r,g,b] per album cover (read in the loop)
 
-  const covers = useMemo(
-    () => albums.map((a) => (a.cover?.photoBlob instanceof Blob ? URL.createObjectURL(a.cover.photoBlob) : null)),
-    [albums],
-  );
-  useEffect(() => () => covers.forEach((u) => u && URL.revokeObjectURL(u)), [covers]);
+  // stable per-photo URLs (shared with the canvas) so covers aren't re-decoded on
+  // every render — see lib/photoUrls.js
+  const covers = useMemo(() => albums.map((a) => photoUrl(a.cover)), [albums]);
 
   // extract each cover's dominant colour (a tiny 16×16 average) for the ambient glow
   useEffect(() => {

@@ -16,6 +16,7 @@ import { readPhotoData } from './lib/exif.js';
 import { buildCard } from './lib/card.js';
 import { toDisplayBlob } from './lib/heic.js';
 import { saveEntry, deleteEntries, getAllEntries, requestPersistence, getCoverMap, setCover } from './lib/db.js';
+import { revokePhotoUrl } from './lib/photoUrls.js';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 const HELVETICA = '"Helvetica Neue", Helvetica, Arial, sans-serif';
@@ -212,6 +213,7 @@ export default function App() {
     } catch {
       /* keep working even if the delete fails to persist */
     }
+    revokePhotoUrl(id);
     const next = entries.filter((e) => e.id !== id);
     setEntries(next);
     if (!next.length) {
@@ -235,6 +237,7 @@ export default function App() {
     } catch {
       /* keep working even if the delete fails to persist */
     }
+    ids.forEach(revokePhotoUrl);
     const gone = new Set(ids);
     const next = entries.filter((e) => !gone.has(e.id));
     setEntries(next);
