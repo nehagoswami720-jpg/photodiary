@@ -262,12 +262,36 @@ export default function Gallery3D({ entries: rawEntries, onAddMoment, coverId, o
               {focused.showTime ? `  ·  ${formatTime(focused.capturedAt)}` : ''}
             </p>
           )}
+
+          {/* per-photo actions (Figma "delete photo UI" 283:466): set this moment
+              as the album cover · delete this moment */}
+          <div className="mt-4 flex items-center gap-4" style={{ fontFamily: HELVETICA }}>
+            {onSetCover && (
+              <button
+                type="button"
+                onClick={() => onSetCover(focused.id)}
+                disabled={focused.id === coverId}
+                className="pointer-events-auto cursor-pointer border border-white bg-white px-4 py-2 text-[16px] leading-none tracking-[-0.8px] text-[#2c2c2c] transition-colors hover:bg-[#e6e6e6] disabled:cursor-default disabled:opacity-55"
+              >
+                {focused.id === coverId ? 'Album cover ✓' : 'Set as album cover'}
+              </button>
+            )}
+            {onDeletePhoto && (
+              <button
+                type="button"
+                onClick={() => {
+                  const id = focused.id;
+                  setFocusedId(null); // return to the live canvas
+                  onDeletePhoto(id);
+                }}
+                className="pointer-events-auto cursor-pointer border-[0.5px] border-white px-4 py-2 text-[16px] leading-none tracking-[-0.8px] text-white transition-colors hover:bg-white/10"
+              >
+                Delete photo
+              </button>
+            )}
+          </div>
         </div>
       )}
-
-      {/* NOTE: per-photo actions (set as cover / delete) — UI to be designed.
-          Handlers ready: onSetCover(id), onDeletePhoto(id) (+ clear focus after
-          delete so the canvas resumes). coverId marks the current cover. */}
     </div>
   );
 }
