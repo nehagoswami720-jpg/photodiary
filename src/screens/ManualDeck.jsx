@@ -35,7 +35,7 @@ export default function ManualDeck({ items, onDone, onCancel }) {
         <p className="text-[24px] leading-[1.3] tracking-[-0.2px] text-[#eaeaea]" style={{ fontFamily: HELVETICA, fontWeight: 300 }}>
           This moment came without its story.
         </p>
-        <p className="max-w-[360px] text-[15px] leading-[1.3] tracking-[0.15px] text-white" style={{ fontFamily: HELVETICA, fontWeight: 300 }}>
+        <p className="max-w-[360px] text-[15px] leading-[1.3] tracking-[0.15px] text-[#c4c4c4]" style={{ fontFamily: HELVETICA, fontWeight: 300 }}>
           A few photos don&apos;t remember where or when they were taken. Add what you like — step
           through them below.
         </p>

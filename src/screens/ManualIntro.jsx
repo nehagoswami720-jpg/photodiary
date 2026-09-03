@@ -23,7 +23,7 @@ export default function ManualIntro({ imageUrl, onAddDetails, onSkip }) {
             This moment came without its story.
           </p>
           <p
-            className="max-w-[340px] text-[15px] leading-[1.3] tracking-[0.15px] text-white"
+            className="max-w-[340px] text-[15px] leading-[1.3] tracking-[0.15px] text-[#c4c4c4]"
             style={{ fontFamily: HELVETICA, fontWeight: 300 }}
           >
             Some photos don&apos;t remember where or when they were taken. You can add it, if you
