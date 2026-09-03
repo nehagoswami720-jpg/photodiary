@@ -272,8 +272,15 @@ export default function Gallery3D({ entries: rawEntries, onAddMoment, coverId, o
               <button
                 type="button"
                 onClick={() => onSetCover(focused.id)}
-                className="pointer-events-auto cursor-pointer border border-white bg-white px-4 py-2 text-[16px] leading-[41px] tracking-[-0.8px] text-[#2c2c2c] transition-colors hover:bg-[#e6e6e6]"
+                className="pointer-events-auto flex cursor-pointer items-center gap-2 border border-white bg-white px-4 py-2 text-[16px] leading-[41px] tracking-[-0.8px] text-[#2c2c2c] transition-colors hover:bg-[#e6e6e6]"
               >
+                {focused.id === coverId && (
+                  <span key={coverId} className="check-in inline-flex">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12.5l4.5 4.5L19 7" />
+                    </svg>
+                  </span>
+                )}
                 Set as album cover
               </button>
             )}
